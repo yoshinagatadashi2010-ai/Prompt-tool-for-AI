@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#176b5b" />
+    <title>PromptWeaver</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">PW</span>
+          <div>
+            <h1>PromptWeaver</h1>
+            <p>画像・動画生成プロンプト編集</p>
+          </div>
+        </div>
+
+        <div class="top-actions" aria-label="プロンプト操作">
+          <div class="segmented" role="radiogroup" aria-label="生成タイプ">
+            <button class="segment is-active" type="button" data-type="image" role="radio" aria-checked="true">画像</button>
+            <button class="segment" type="button" data-type="video" role="radio" aria-checked="false">動画</button>
+          </div>
+          <button class="icon-button" type="button" id="copyMarkdown" aria-label="Markdownをコピー" title="Markdownをコピー">⧉</button>
+          <button class="icon-button" type="button" id="downloadMarkdown" aria-label="Markdownを保存" title="Markdownを保存">⇩</button>
+          <button class="icon-button danger" type="button" id="resetTemplate" aria-label="テンプレートを初期化" title="テンプレートを初期化">↺</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="editor-panel" aria-labelledby="editorTitle">
+          <div class="panel-head">
+            <div>
+              <h2 id="editorTitle">項目</h2>
+              <p id="itemCount">0項目</p>
+            </div>
+            <button class="primary-action" type="button" id="addItem">＋ 項目</button>
+          </div>
+
+          <div class="project-fields">
+            <label>
+              <span>タイトル</span>
+              <input id="promptTitle" type="text" maxlength="80" autocomplete="off" />
+            </label>
+            <label>
+              <span>出力形式</span>
+              <select id="outputTone">
+                <option value="structured">構造化</option>
+                <option value="compact">コンパクト</option>
+                <option value="production">制作指示書</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="item-list" id="itemList" aria-label="プロンプト項目"></div>
+        </section>
+
+        <section class="preview-panel" aria-labelledby="previewTitle">
+          <div class="share-panel" aria-labelledby="shareTitle">
+            <div class="panel-head">
+              <div>
+                <h2 id="shareTitle">スマホで開く</h2>
+                <p id="qrStatus" aria-live="polite">このページのURLをQR化</p>
+              </div>
+              <button class="secondary-action" type="button" id="refreshQr">更新</button>
+            </div>
+            <div class="qr-layout">
+              <canvas id="qrCanvas" width="180" height="180" aria-label="スマホ用QRコード"></canvas>
+              <div class="qr-fields">
+                <label>
+                  <span>共有URL</span>
+                  <input id="shareUrl" type="url" autocomplete="off" />
+                </label>
+                <p class="qr-note">スマホとPCが同じネットワーク上にある場合は、PCのLANアドレスで開いたURLを入力すると読み取りやすくなります。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-head markdown-head">
+            <div>
+              <h2 id="previewTitle">Markdown</h2>
+              <p id="copyStatus" aria-live="polite">自動更新</p>
+            </div>
+            <button class="secondary-action" type="button" id="selectMarkdown">全選択</button>
+          </div>
+
+          <textarea id="markdownOutput" spellcheck="false" readonly></textarea>
+        </section>
+      </main>
+    </div>
+
+    <template id="itemTemplate">
+      <article class="prompt-item" draggable="true">
+        <div class="item-main">
+          <button class="drag-handle" type="button" aria-label="並べ替え" title="並べ替え">⋮⋮</button>
+          <div class="priority-badge" aria-label="優先順位"></div>
+          <div class="item-fields">
+            <div class="item-row">
+              <label class="item-label">
+                <span>項目名</span>
+                <input class="field-name" type="text" maxlength="32" autocomplete="off" />
+              </label>
+              <label class="include-toggle">
+                <input class="field-enabled" type="checkbox" />
+                <span>出力</span>
+              </label>
+            </div>
+            <label class="content-field">
+              <span>内容</span>
+              <textarea class="field-content" rows="4"></textarea>
+            </label>
+          </div>
+        </div>
+        <div class="item-tools">
+          <button type="button" class="tool-button move-up" aria-label="上へ" title="上へ">↑</button>
+          <button type="button" class="tool-button move-down" aria-label="下へ" title="下へ">↓</button>
+          <button type="button" class="tool-button duplicate" aria-label="複製" title="複製">⧉</button>
+          <button type="button" class="tool-button remove" aria-label="削除" title="削除">×</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

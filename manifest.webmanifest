@@ -1,0 +1,19 @@
+{
+  "name": "PromptWeaver",
+  "short_name": "PromptWeaver",
+  "description": "画像・動画生成プロンプトを構造化してMarkdownに書き出すローカルアプリ",
+  "lang": "ja",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f5f7f8",
+  "theme_color": "#176b5b",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
