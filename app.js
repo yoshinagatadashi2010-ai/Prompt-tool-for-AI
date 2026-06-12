@@ -1,6 +1,6 @@
 const STORAGE_KEY = "prompt-weaver-state-v2";
 const EMPTY_VALUE = "未入力";
-const serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
+let serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
 const LAN_HOST_FALLBACK = serverConfig.lanHost || "192.168.11.4";
 
 const promptTemplates = {
@@ -40,6 +40,7 @@ const promptTemplates = {
 
 let state = loadState();
 let draggedId = null;
+let pointerDrag = null;
 
 const elements = {
   itemList: document.querySelector("#itemList"),
@@ -61,7 +62,22 @@ const elements = {
   selectMarkdown: document.querySelector("#selectMarkdown")
 };
 
-initialize();
+loadServerConfig().finally(initialize);
+
+async function loadServerConfig() {
+  try {
+    const response = await fetch("./server-config.js", { cache: "no-store" });
+    if (!response.ok) return;
+
+    const source = await response.text();
+    const match = source.match(/window\.PROMPTWEAVER_SERVER\s*=\s*(\{[\s\S]*?\});?/);
+    if (!match) return;
+
+    serverConfig = Function(`"use strict"; return (${match[1]});`)();
+  } catch {
+    serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
+  }
+}
 
 function initialize() {
   elements.promptTitle.value = state.title;
@@ -160,6 +176,15 @@ function render() {
       node.draggable = false;
     });
 
+    handle.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse") return;
+      startPointerReorder(event, node, item.id);
+    });
+
+    handle.addEventListener("pointermove", updatePointerReorder);
+    handle.addEventListener("pointerup", finishPointerReorder);
+    handle.addEventListener("pointercancel", cancelPointerReorder);
+
     node.addEventListener("dragstart", (event) => {
       draggedId = item.id;
       node.classList.add("is-dragging");
@@ -247,6 +272,70 @@ function reorderById(sourceId, targetId, placeAfter) {
   render();
 }
 
+function startPointerReorder(event, node, itemId) {
+  if (state.items.length < 2) return;
+
+  event.preventDefault();
+  pointerDrag = {
+    id: itemId,
+    pointerId: event.pointerId,
+    targetId: null,
+    placeAfter: false
+  };
+  draggedId = itemId;
+  node.classList.add("is-dragging");
+  document.body.classList.add("is-reordering");
+  event.currentTarget.setPointerCapture(event.pointerId);
+}
+
+function updatePointerReorder(event) {
+  if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+
+  event.preventDefault();
+  const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".prompt-item");
+  clearDragMarkers();
+  findPromptItemNode(pointerDrag.id)?.classList.add("is-dragging");
+
+  if (!target || target.dataset.id === pointerDrag.id) {
+    pointerDrag.targetId = null;
+    return;
+  }
+
+  const rect = target.getBoundingClientRect();
+  pointerDrag.targetId = target.dataset.id;
+  pointerDrag.placeAfter = event.clientY > rect.top + rect.height / 2;
+  target.classList.toggle("is-over-before", !pointerDrag.placeAfter);
+  target.classList.toggle("is-over-after", pointerDrag.placeAfter);
+}
+
+function finishPointerReorder(event) {
+  if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+
+  event.preventDefault();
+  const { id, targetId, placeAfter } = pointerDrag;
+  pointerDrag = null;
+  draggedId = null;
+  document.body.classList.remove("is-reordering");
+  clearDragMarkers();
+
+  if (targetId) {
+    reorderById(id, targetId, placeAfter);
+  }
+}
+
+function cancelPointerReorder(event) {
+  if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+
+  pointerDrag = null;
+  draggedId = null;
+  document.body.classList.remove("is-reordering");
+  clearDragMarkers();
+}
+
+function findPromptItemNode(itemId) {
+  return [...document.querySelectorAll(".prompt-item")].find((node) => node.dataset.id === itemId);
+}
+
 function resetTemplate() {
   Object.assign(state, createTemplateState(state.type));
   elements.promptTitle.value = state.title;
@@ -272,12 +361,23 @@ async function copyMarkdown() {
 function downloadMarkdown() {
   const markdown = elements.markdownOutput.value;
   const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+  const safeTitle = (state.title || "prompt").replace(/[\\/:*?"<>|]/g, "_");
+  const fileName = `${safeTitle}.md`;
+
+  if (navigator.canShare && navigator.share) {
+    const file = new File([blob], fileName, { type: "text/markdown" });
+    if (navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: state.title || "PromptWeaver" })
+        .then(() => setStatus("Markdownを共有しました"))
+        .catch(() => setStatus("共有をキャンセルしました"));
+      return;
+    }
+  }
+
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
-  const safeTitle = (state.title || "prompt").replace(/[\\/:*?"<>|]/g, "_");
-
   anchor.href = url;
-  anchor.download = `${safeTitle}.md`;
+  anchor.download = fileName;
   anchor.click();
   URL.revokeObjectURL(url);
   setStatus("Markdownを保存しました");

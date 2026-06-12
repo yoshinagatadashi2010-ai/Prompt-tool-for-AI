@@ -1,48 +1,59 @@
 # PromptWeaver
 
-画像・動画生成用のプロンプトを項目ごとに構造化し、優先順位付きのMarkdownとして書き出すローカルWebアプリです。
+画像・動画生成用のプロンプトを項目ごとに構造化し、優先順位付きのMarkdownとして書き出すWebアプリです。
 
-## 起動
+## PCが起動していなくてもスマホで使う
 
-PowerShellを開きっぱなしにせず使う場合は、次のファイルをダブルクリックします。
+PCが起動していない状態でスマホから使うには、アプリをインターネット上に公開します。このリポジトリにはGitHub Pages用の自動公開設定を追加済みです。
+
+公開後のURLは通常、次の形になります。
+
+```text
+https://yoshinagatadashi2010-ai.github.io/Prompt-tool-for-AI/
+```
+
+このURLをスマホで開けば、PCの電源が入っていなくても使えます。
+
+### iPhone / iPadでホーム画面に追加
+
+Safariで公開URLを開き、共有ボタンから「ホーム画面に追加」を選ぶと、PromptWeaverをアプリのように起動できます。入力内容は端末のブラウザ内に保存されるため、オフラインでも前回の内容を開けます。
+
+## GitHub Pagesの有効化
+
+GitHubで次の設定を行います。
+
+1. GitHubのリポジトリ `Prompt-tool-for-AI` を開く
+2. `Settings` を開く
+3. `Pages` を開く
+4. `Build and deployment` の `Source` を `GitHub Actions` にする
+5. このリポジトリの変更をGitHubへpushする
+
+push後、`Actions` タブで `Deploy PromptWeaver to GitHub Pages` が成功すると公開されます。
+
+## PC内だけで使う
+
+PowerShellを開きっぱなしにせずPC内と同じWi-Fiのスマホで使う場合は、次のファイルをダブルクリックします。
 
 ```text
 start-promptweaver.vbs
 ```
 
-このファイルはバックグラウンドでローカルサーバーを起動し、PCのブラウザでPromptWeaverを開きます。
-
-スマホから開くURLは、画面右側の「スマホで開く」に表示されるQRコードを読み取ります。現在のLAN IPが取得できる場合は、起動時に `server-config.js` が自動生成され、QR用URLに反映されます。
-
-## 自動起動
-
-Windowsにログインしたら自動でPromptWeaverサーバーを起動したい場合は、次のファイルを一度だけダブルクリックします。
-
-```text
-install-startup.vbs
-```
-
-自動起動をやめる場合は、次のファイルをダブルクリックします。
-
-```text
-uninstall-startup.vbs
-```
-
-## 終了
-
-バックグラウンドで起動したサーバーを止めたい場合は、次のファイルをダブルクリックします。
+終了する場合は次をダブルクリックします。
 
 ```text
 stop-promptweaver.vbs
 ```
 
-## 手動起動
+Windowsログイン時に自動起動したい場合は、次を一度だけダブルクリックします。
 
-トラブル時は、PowerShellで次を実行して手動起動できます。
+```text
+install-startup.vbs
+```
 
-```powershell
-cd "C:\Users\tada-\OneDrive\ドキュメント\生成AI用プロンプト作成ツール"
-python -m http.server 8765 --bind 0.0.0.0
+自動起動を解除する場合は、次をダブルクリックします。
+
+```text
+uninstall-startup.vbs
 ```
 
 ## 主な機能

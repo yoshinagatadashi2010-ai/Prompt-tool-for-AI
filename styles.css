@@ -51,7 +51,7 @@ button {
 
 .app-shell {
   min-height: 100vh;
-  padding: 18px;
+  padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
 }
 
 .topbar {
@@ -315,6 +315,7 @@ textarea {
   resize: vertical;
   padding: 10px;
   line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
 }
 
 input:focus,
@@ -385,6 +386,12 @@ select:focus {
   font-weight: 900;
   line-height: 1;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.is-reordering {
+  overscroll-behavior: contain;
 }
 
 .priority-badge {
