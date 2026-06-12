@@ -4,15 +4,46 @@
 
 ## 起動
 
-PCだけで使う場合は `index.html` をブラウザで開きます。
+PowerShellを開きっぱなしにせず使う場合は、次のファイルをダブルクリックします。
 
-スマホで使う場合は、PCでローカルサーバーを立て、同じWi-Fi上のスマホからアクセスします。
-
-```powershell
-py -m http.server 8765 --bind 0.0.0.0
+```text
+start-promptweaver.vbs
 ```
 
-その後、PCのLAN IPアドレスを使って `http://<PCのIPアドレス>:8765/index.html` を開き、画面右側の「共有URL」に同じURLを入力してQRコードを読み取ります。
+このファイルはバックグラウンドでローカルサーバーを起動し、PCのブラウザでPromptWeaverを開きます。
+
+スマホから開くURLは、画面右側の「スマホで開く」に表示されるQRコードを読み取ります。現在のLAN IPが取得できる場合は、起動時に `server-config.js` が自動生成され、QR用URLに反映されます。
+
+## 自動起動
+
+Windowsにログインしたら自動でPromptWeaverサーバーを起動したい場合は、次のファイルを一度だけダブルクリックします。
+
+```text
+install-startup.vbs
+```
+
+自動起動をやめる場合は、次のファイルをダブルクリックします。
+
+```text
+uninstall-startup.vbs
+```
+
+## 終了
+
+バックグラウンドで起動したサーバーを止めたい場合は、次のファイルをダブルクリックします。
+
+```text
+stop-promptweaver.vbs
+```
+
+## 手動起動
+
+トラブル時は、PowerShellで次を実行して手動起動できます。
+
+```powershell
+cd "C:\Users\tada-\OneDrive\ドキュメント\生成AI用プロンプト作成ツール"
+python -m http.server 8765 --bind 0.0.0.0
+```
 
 ## 主な機能
 
@@ -23,10 +54,3 @@ py -m http.server 8765 --bind 0.0.0.0
 - Markdownの自動生成、コピー、ダウンロード
 - スマホアクセス用QRコードの表示
 - 入力内容のローカル保存
-
-## デスクトップアプリ化の方針
-
-現状は依存なしの静的Webアプリとして動きます。UIとロジックはブラウザAPIだけに寄せているため、次のどちらにも移行しやすい構成です。
-
-- PWA: ローカルサーバーまたはホスティング上で開けば、`manifest.webmanifest` と `sw.js` を使ってインストール型にできます。
-- Electron/Tauri: `index.html`、`styles.css`、`app.js` をそのままウィンドウ内に読み込み、Markdown保存だけネイティブファイル保存に差し替えられます。

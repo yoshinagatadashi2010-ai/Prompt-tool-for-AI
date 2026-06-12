@@ -1,5 +1,7 @@
 const STORAGE_KEY = "prompt-weaver-state-v2";
 const EMPTY_VALUE = "未入力";
+const serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
+const LAN_HOST_FALLBACK = serverConfig.lanHost || "192.168.11.4";
 
 const promptTemplates = {
   image: {
@@ -504,8 +506,16 @@ function clearDragMarkers() {
 
 function getInitialShareUrl() {
   const currentUrl = window.location.href;
+  const localHosts = ["127.0.0.1", "localhost", "::1"];
+  if (serverConfig.lanUrl) return serverConfig.lanUrl;
+
+  if (localHosts.includes(window.location.hostname)) {
+    const port = window.location.port ? `:${window.location.port}` : "";
+    return `${window.location.protocol}//${LAN_HOST_FALLBACK}${port}${window.location.pathname}`;
+  }
+
   if (window.location.protocol !== "file:") return currentUrl;
-  return "http://PCのIPアドレス:ポート番号/index.html";
+  return `http://${LAN_HOST_FALLBACK}:8765/index.html`;
 }
 
 function renderQr() {
@@ -523,7 +533,11 @@ function renderQr() {
   try {
     const qr = createQrMatrix(value);
     drawQr(canvas, qr.modules);
-    setQrStatus("QRコードを更新しました");
+    if (/^https?:\/\/(127\.0\.0\.1|localhost|\[::1\]|::1)/.test(value)) {
+      setQrStatus("127.0.0.1はスマホでは開けません。LAN IPのURLにしてください");
+    } else {
+      setQrStatus("QRコードを更新しました");
+    }
   } catch (error) {
     drawQrPlaceholder(canvas);
     setQrStatus(error.message);
