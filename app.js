@@ -432,7 +432,6 @@ function buildStructuredMarkdown(title, kind, items) {
   appendPriorityList(lines, items);
   lines.push("", "## 項目別プロンプト");
   appendDetailedItems(lines, items);
-  lines.push("", "## 連結プロンプト", "```text", buildPromptBlock(items), "```");
 
   return finishMarkdown(lines);
 }
@@ -462,7 +461,6 @@ function buildProductionMarkdown(title, kind, items) {
   ];
 
   appendDetailedItems(lines, items);
-  lines.push("", "## 実行用プロンプト", "```text", buildPromptBlock(items), "```");
 
   return finishMarkdown(lines);
 }
