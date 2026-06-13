@@ -443,18 +443,8 @@ function buildCompactMarkdown(title, kind, items) {
     "",
     `**${kind}プロンプト**`,
     "",
-    buildPromptBlock(items),
-    "",
-    "## 項目"
+    buildPromptBlock(items)
   ];
-
-  if (!items.length) {
-    lines.push("- 出力対象の項目がありません");
-  } else {
-    items.forEach((item, index) => {
-      lines.push(`- P${index + 1} ${normalizeInline(item.name)}: ${normalizeBlock(item.content)}`);
-    });
-  }
 
   return finishMarkdown(lines);
 }
