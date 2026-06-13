@@ -1,4 +1,4 @@
-const CACHE_NAME = "prompt-weaver-v6";
+const CACHE_NAME = "prompt-weaver-v7";
 const ASSETS = [
   "./",
   "./index.html",
