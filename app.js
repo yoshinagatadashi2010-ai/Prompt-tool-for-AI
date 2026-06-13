@@ -900,7 +900,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260613-2").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
