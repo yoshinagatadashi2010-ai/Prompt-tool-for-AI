@@ -424,13 +424,10 @@ function buildStructuredMarkdown(title, kind, items) {
     "",
     `- 種別: ${kind}`,
     "- 出力形式: 構造化",
-    "- 優先順位: 上から順に高い",
     "",
-    "## 優先順位"
+    "## 項目別プロンプト"
   ];
 
-  appendPriorityList(lines, items);
-  lines.push("", "## 項目別プロンプト");
   appendDetailedItems(lines, items);
 
   return finishMarkdown(lines);
@@ -463,17 +460,6 @@ function buildProductionMarkdown(title, kind, items) {
   appendDetailedItems(lines, items);
 
   return finishMarkdown(lines);
-}
-
-function appendPriorityList(lines, items) {
-  if (!items.length) {
-    lines.push("- 出力対象の項目がありません");
-    return;
-  }
-
-  items.forEach((item, index) => {
-    lines.push(`${index + 1}. ${normalizeInline(item.name)}`);
-  });
 }
 
 function appendDetailedItems(lines, items) {
