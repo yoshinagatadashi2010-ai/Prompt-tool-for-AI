@@ -345,17 +345,29 @@ function resetTemplate() {
 }
 
 async function copyMarkdown() {
-  const markdown = elements.markdownOutput.value;
+  const promptText = buildCopyPrompt();
 
   try {
-    await navigator.clipboard.writeText(markdown);
-    setStatus("コピーしました");
+    await navigator.clipboard.writeText(promptText);
+    setStatus("プロンプト本文をコピーしました");
   } catch {
-    elements.markdownOutput.focus();
-    elements.markdownOutput.select();
-    const copied = document.execCommand("copy");
-    setStatus(copied ? "コピーしました" : "コピーできませんでした");
+    const copied = copyTextFallback(promptText);
+    setStatus(copied ? "プロンプト本文をコピーしました" : "コピーできませんでした");
   }
+}
+
+function copyTextFallback(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.inset = "0 auto auto -9999px";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  return copied;
 }
 
 function downloadMarkdown() {
@@ -416,6 +428,11 @@ function buildMarkdown() {
   }
 
   return buildStructuredMarkdown(title, template.label, enabledItems);
+}
+
+function buildCopyPrompt() {
+  const enabledItems = state.items.filter((item) => item.enabled);
+  return finishMarkdown([buildPromptBlock(enabledItems)]);
 }
 
 function buildStructuredMarkdown(title, kind, items) {
@@ -900,7 +917,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260613-2").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260614-1").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
