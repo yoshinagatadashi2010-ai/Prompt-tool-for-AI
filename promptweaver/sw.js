@@ -1,9 +1,9 @@
-const CACHE_NAME = "prompt-weaver-legacy-v1-20260616-pw1";
+const CACHE_NAME = "prompt-weaver-legacy-v1-20260616-pw2";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260616-pw1",
-  "./app.js?v=20260616-pw1",
+  "./styles.css?v=20260616-pw2",
+  "./app.js?v=20260616-pw2",
   "./manifest.webmanifest",
   "./icon.svg",
   "./icon-192.png",
