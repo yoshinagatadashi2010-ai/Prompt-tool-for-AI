@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v1";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v2-empty-default";
 const EMPTY_VALUE = "未入力";
 
 let serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
@@ -616,9 +616,12 @@ function buildPromptText() {
     .map((piece) => normalizePromptClause(piece.content))
     .filter(Boolean)
     .join(", ");
+
+  if (!imageRefs && !positive) return "";
+
   const parameters = buildParameterTokens().join(" ");
 
-  return [imageRefs, positive, parameters].filter(Boolean).join(" ").trim() || "Describe the image --ar 1:1 --v 8.1";
+  return [imageRefs, positive, parameters].filter(Boolean).join(" ").trim();
 }
 
 function buildBriefOutput() {
@@ -837,12 +840,13 @@ function loadState() {
     if (isValidSavedState(saved)) {
       return {
         preset: saved.preset,
-        title: saved.title || promptPresets[saved.preset].title,
-        goal: saved.goal || promptPresets[saved.preset].goal,
+        title: typeof saved.title === "string" ? saved.title : promptPresets[saved.preset].title,
+        goal: typeof saved.goal === "string" ? saved.goal : promptPresets[saved.preset].goal,
         outputFormat: saved.outputFormat || "prompt",
         imageRefs: saved.imageRefs || "",
         styleRefs: saved.styleRefs || "",
-        negativePrompt: saved.negativePrompt || promptPresets[saved.preset].negativePrompt,
+        negativePrompt:
+          typeof saved.negativePrompt === "string" ? saved.negativePrompt : promptPresets[saved.preset].negativePrompt,
         params: normalizeSavedParams(saved.params, saved.preset),
         pieces: saved.pieces.map(normalizeSavedPiece)
       };
@@ -893,14 +897,14 @@ function createPresetState(presetName) {
 
   return {
     preset: presetName,
-    title: preset.title,
-    goal: preset.goal,
+    title: "",
+    goal: "",
     outputFormat: preset.outputFormat,
     imageRefs: "",
     styleRefs: "",
-    negativePrompt: preset.negativePrompt,
+    negativePrompt: "",
     params: { ...preset.params },
-    pieces: preset.pieces.map(([name, placeholder]) => createPiece(name, placeholder, placeholder))
+    pieces: preset.pieces.map(([name]) => createPiece(name, "", ""))
   };
 }
 
@@ -1249,7 +1253,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260616-5").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260616-6").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
