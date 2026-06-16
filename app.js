@@ -340,19 +340,21 @@ function renderPieces() {
     node.querySelector(".remove").addEventListener("click", () => removePiece(index));
 
     handle.addEventListener("pointerdown", (event) => {
-      if (event.pointerType === "mouse") {
-        node.draggable = true;
-        return;
-      }
-
       startPointerReorder(event, node, piece.id);
     });
 
     handle.addEventListener("pointermove", updatePointerReorder);
     handle.addEventListener("pointerup", finishPointerReorder);
     handle.addEventListener("pointercancel", cancelPointerReorder);
+    handle.addEventListener("mousemove", updatePointerReorder);
+    handle.addEventListener("mouseup", finishPointerReorder);
 
     node.addEventListener("dragstart", (event) => {
+      if (pointerDrag) {
+        event.preventDefault();
+        return;
+      }
+
       if (!event.target.closest(".drag-handle")) {
         event.preventDefault();
         return;
@@ -458,6 +460,7 @@ function startPointerReorder(event, node, pieceId) {
   draggedId = pieceId;
   node.classList.add("is-dragging");
   document.body.classList.add("is-reordering");
+  addReorderDocumentListeners();
 
   if (event.currentTarget.setPointerCapture) {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -465,7 +468,7 @@ function startPointerReorder(event, node, pieceId) {
 }
 
 function updatePointerReorder(event) {
-  if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+  if (!isActiveReorderEvent(event)) return;
 
   event.preventDefault();
   const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".prompt-item");
@@ -485,13 +488,14 @@ function updatePointerReorder(event) {
 }
 
 function finishPointerReorder(event) {
-  if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+  if (!isActiveReorderEvent(event)) return;
 
   event.preventDefault();
   const { id, targetId, placeAfter } = pointerDrag;
   pointerDrag = null;
   draggedId = null;
   document.body.classList.remove("is-reordering");
+  removeReorderDocumentListeners();
   clearDragMarkers();
 
   if (targetId) {
@@ -500,12 +504,34 @@ function finishPointerReorder(event) {
 }
 
 function cancelPointerReorder(event) {
-  if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+  if (!isActiveReorderEvent(event)) return;
 
   pointerDrag = null;
   draggedId = null;
   document.body.classList.remove("is-reordering");
+  removeReorderDocumentListeners();
   clearDragMarkers();
+}
+
+function isActiveReorderEvent(event) {
+  if (!pointerDrag) return false;
+  return event.pointerId === undefined || event.pointerId === pointerDrag.pointerId;
+}
+
+function addReorderDocumentListeners() {
+  document.addEventListener("pointermove", updatePointerReorder);
+  document.addEventListener("pointerup", finishPointerReorder);
+  document.addEventListener("pointercancel", cancelPointerReorder);
+  document.addEventListener("mousemove", updatePointerReorder);
+  document.addEventListener("mouseup", finishPointerReorder);
+}
+
+function removeReorderDocumentListeners() {
+  document.removeEventListener("pointermove", updatePointerReorder);
+  document.removeEventListener("pointerup", finishPointerReorder);
+  document.removeEventListener("pointercancel", cancelPointerReorder);
+  document.removeEventListener("mousemove", updatePointerReorder);
+  document.removeEventListener("mouseup", finishPointerReorder);
 }
 
 function findPieceNode(pieceId) {
@@ -1253,7 +1279,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260616-6").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260616-7").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }

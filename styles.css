@@ -400,10 +400,14 @@ select:focus {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  cursor: grab;
 }
 
 .is-reordering {
   overscroll-behavior: contain;
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .priority-badge {
