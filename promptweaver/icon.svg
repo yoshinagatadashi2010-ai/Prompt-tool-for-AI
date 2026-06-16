@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">PromptWeaver</title>
+  <desc id="desc">PromptWeaver app icon</desc>
+  <rect width="256" height="256" rx="48" fill="#202426" />
+  <path d="M56 68h72c33 0 54 19 54 49s-21 50-54 50H92v45H56V68Zm36 31v37h32c14 0 22-7 22-19 0-11-8-18-22-18H92Z" fill="#dceee9" />
+  <path d="M158 143h27l14 38 14-38h28l-29 69h-26l-28-69Z" fill="#7fa9ff" />
+</svg>
