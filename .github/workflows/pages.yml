@@ -1,4 +1,4 @@
-name: Deploy PromptWeaver to GitHub Pages
+name: Deploy Midjourney Prompt Forge to GitHub Pages
 
 on:
   push:

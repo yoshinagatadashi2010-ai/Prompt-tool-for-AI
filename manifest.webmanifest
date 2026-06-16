@@ -1,13 +1,13 @@
 {
-  "name": "PromptWeaver",
-  "short_name": "PromptWeaver",
-  "description": "画像・動画生成プロンプトを構造化してMarkdownに書き出すWebアプリ",
+  "name": "Midjourney Prompt Forge",
+  "short_name": "MJ Prompt",
+  "description": "Midjourney V8.1を中心に、画像生成プロンプトとパラメータを構造化して作成するWebアプリ",
   "lang": "ja",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "background_color": "#f5f7f8",
-  "theme_color": "#176b5b",
+  "background_color": "#f5f7fb",
+  "theme_color": "#1f6f8b",
   "icons": [
     {
       "src": "icon.svg",

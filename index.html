@@ -3,34 +3,36 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#176b5b" />
+    <meta name="theme-color" content="#1f6f8b" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="PromptWeaver" />
+    <meta name="apple-mobile-web-app-title" content="MJ Prompt Forge" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>PromptWeaver</title>
+    <title>Midjourney Prompt Forge</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260616-4" />
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
         <div class="brand">
-          <span class="brand-mark" aria-hidden="true">PW</span>
-          <div>
-            <h1>PromptWeaver</h1>
-            <p>画像・動画生成プロンプト編集</p>
+          <span class="brand-mark" aria-hidden="true">MJ</span>
+          <div class="brand-copy">
+            <h1>Midjourney Prompt Forge</h1>
+            <p>V8.1向けの構造化プロンプト作成ツール</p>
           </div>
         </div>
 
         <div class="top-actions" aria-label="プロンプト操作">
-          <div class="segmented" role="radiogroup" aria-label="生成タイプ">
-            <button class="segment is-active" type="button" data-type="image" role="radio" aria-checked="true">画像</button>
-            <button class="segment" type="button" data-type="video" role="radio" aria-checked="false">動画</button>
+          <div class="segmented" role="radiogroup" aria-label="プリセット">
+            <button class="segment is-active" type="button" data-preset="product" role="radio" aria-checked="true">商品</button>
+            <button class="segment" type="button" data-preset="portrait" role="radio" aria-checked="false">人物</button>
+            <button class="segment" type="button" data-preset="scene" role="radio" aria-checked="false">空間</button>
+            <button class="segment" type="button" data-preset="niji" role="radio" aria-checked="false">Niji</button>
           </div>
-          <button class="icon-button" type="button" id="copyMarkdown" aria-label="プロンプト本文をコピー" title="プロンプト本文をコピー">⧉</button>
-          <button class="icon-button" type="button" id="downloadMarkdown" aria-label="Markdownを保存" title="Markdownを保存">⇩</button>
-          <button class="icon-button danger" type="button" id="resetTemplate" aria-label="テンプレートを初期化" title="テンプレートを初期化">↺</button>
+          <button class="icon-button" type="button" id="copyPrompt" aria-label="プロンプトをコピー" title="プロンプトをコピー">Copy</button>
+          <button class="icon-button" type="button" id="downloadMarkdown" aria-label="Markdownを保存" title="Markdownを保存">MD</button>
+          <button class="icon-button danger" type="button" id="resetPreset" aria-label="プリセットを初期化" title="プリセットを初期化">Reset</button>
         </div>
       </header>
 
@@ -38,32 +40,163 @@
         <section class="editor-panel" aria-labelledby="editorTitle">
           <div class="panel-head">
             <div>
-              <h2 id="editorTitle">項目</h2>
-              <p id="itemCount">0項目</p>
+              <h2 id="editorTitle">プロンプト素材</h2>
+              <p id="pieceCount">0項目</p>
             </div>
-            <button class="primary-action" type="button" id="addItem">＋ 項目</button>
+            <button class="primary-action" type="button" id="addPiece">項目追加</button>
           </div>
 
           <div class="project-fields">
+            <label class="field-span-2">
+              <span>作品名</span>
+              <input id="projectTitle" type="text" maxlength="90" autocomplete="off" />
+            </label>
             <label>
-              <span>タイトル</span>
-              <input id="promptTitle" type="text" maxlength="80" autocomplete="off" />
+              <span>用途</span>
+              <input id="projectGoal" type="text" maxlength="120" autocomplete="off" />
             </label>
             <label>
               <span>出力形式</span>
-              <select id="outputTone">
-                <option value="structured">構造化</option>
-                <option value="compact">コンパクト</option>
-                <option value="production">制作指示書</option>
+              <select id="outputFormat">
+                <option value="prompt">Midjourney prompt</option>
+                <option value="brief">Prompt + brief</option>
+                <option value="markdown">Markdown package</option>
               </select>
             </label>
           </div>
 
-          <div class="item-list" id="itemList" aria-label="プロンプト項目"></div>
+          <div class="item-list" id="pieceList" aria-label="プロンプト素材リスト"></div>
+
+          <div class="reference-fields" aria-label="参照と除外">
+            <label>
+              <span>画像URL</span>
+              <textarea id="imageRefs" rows="2" placeholder="https://..."></textarea>
+            </label>
+            <label>
+              <span>Style Reference</span>
+              <textarea id="styleRefs" rows="2" placeholder="https://..."></textarea>
+            </label>
+            <label class="field-span-2">
+              <span>除外</span>
+              <textarea id="negativePrompt" rows="3"></textarea>
+            </label>
+          </div>
         </section>
 
-        <section class="preview-panel" aria-labelledby="previewTitle">
-          <div class="share-panel" aria-labelledby="shareTitle">
+        <aside class="preview-panel" aria-labelledby="previewTitle">
+          <section class="tuning-panel" aria-labelledby="tuningTitle">
+            <div class="panel-head">
+              <div>
+                <h2 id="tuningTitle">Midjourney設定</h2>
+                <p id="compatStatus">V8.1 / Raw / prompt-first</p>
+              </div>
+            </div>
+
+            <div class="control-grid">
+              <label>
+                <span>モデル</span>
+                <select id="version">
+                  <option value="v8.1">V8.1</option>
+                  <option value="v7">V7</option>
+                  <option value="niji7">Niji 7</option>
+                  <option value="v6.1">V6.1</option>
+                </select>
+              </label>
+              <label>
+                <span>比率</span>
+                <select id="aspectRatio">
+                  <option value="1:1">1:1</option>
+                  <option value="4:5">4:5</option>
+                  <option value="2:3">2:3</option>
+                  <option value="3:2">3:2</option>
+                  <option value="16:9">16:9</option>
+                  <option value="9:16">9:16</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </label>
+              <label>
+                <span>Custom AR</span>
+                <input id="customAspect" type="text" inputmode="numeric" placeholder="21:9" />
+              </label>
+              <label>
+                <span>解像</span>
+                <select id="resolution">
+                  <option value="">標準</option>
+                  <option value="hd">HD</option>
+                  <option value="sd">SD</option>
+                </select>
+              </label>
+              <label>
+                <span>Stylize <b id="stylizeValue">150</b></span>
+                <input id="stylize" type="range" min="0" max="1000" step="10" />
+              </label>
+              <label>
+                <span>Chaos <b id="chaosValue">8</b></span>
+                <input id="chaos" type="range" min="0" max="100" step="1" />
+              </label>
+              <label>
+                <span>Weird <b id="weirdValue">0</b></span>
+                <input id="weird" type="range" min="0" max="3000" step="50" />
+              </label>
+              <label>
+                <span>Quality</span>
+                <select id="quality">
+                  <option value="">なし</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="4">4</option>
+                </select>
+              </label>
+              <label>
+                <span>Seed</span>
+                <input id="seed" type="number" min="0" step="1" placeholder="任意" />
+              </label>
+              <label>
+                <span>Style Weight</span>
+                <input id="styleWeight" type="number" min="0" max="1000" step="10" placeholder="任意" />
+              </label>
+            </div>
+
+            <div class="toggle-grid" aria-label="追加パラメータ">
+              <label class="toggle-pill">
+                <input id="rawMode" type="checkbox" />
+                <span>Raw</span>
+              </label>
+              <label class="toggle-pill">
+                <input id="tileMode" type="checkbox" />
+                <span>Tile</span>
+              </label>
+              <label class="toggle-pill">
+                <input id="publicMode" type="checkbox" />
+                <span>Public</span>
+              </label>
+              <label class="toggle-pill">
+                <input id="stealthMode" type="checkbox" />
+                <span>Stealth</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="score-panel" aria-label="プロンプト強度">
+            <div class="score-ring" id="scoreRing">0</div>
+            <div class="score-copy">
+              <h2>強度チェック</h2>
+              <p id="scoreText">入力待ち</p>
+            </div>
+          </section>
+
+          <section class="output-panel" aria-labelledby="previewTitle">
+            <div class="panel-head markdown-head">
+              <div>
+                <h2 id="previewTitle">出力</h2>
+                <p id="copyStatus" aria-live="polite">自動更新</p>
+              </div>
+              <button class="secondary-action" type="button" id="selectOutput">全選択</button>
+            </div>
+            <textarea id="promptOutput" spellcheck="false" readonly></textarea>
+          </section>
+
+          <section class="share-panel" aria-labelledby="shareTitle">
             <div class="panel-head">
               <div>
                 <h2 id="shareTitle">スマホで開く</h2>
@@ -73,33 +206,20 @@
             </div>
             <div class="qr-layout">
               <canvas id="qrCanvas" width="180" height="180" aria-label="スマホ用QRコード"></canvas>
-              <div class="qr-fields">
-                <label>
-                  <span>共有URL</span>
-                  <input id="shareUrl" type="url" autocomplete="off" />
-                </label>
-                <p class="qr-note">スマホとPCが同じネットワーク上にある場合は、PCのLANアドレスで開いたURLを入力すると読み取りやすくなります。</p>
-              </div>
+              <label>
+                <span>共有URL</span>
+                <input id="shareUrl" type="url" autocomplete="off" />
+              </label>
             </div>
-          </div>
-
-          <div class="panel-head markdown-head">
-            <div>
-              <h2 id="previewTitle">Markdown</h2>
-              <p id="copyStatus" aria-live="polite">自動更新</p>
-            </div>
-            <button class="secondary-action" type="button" id="selectMarkdown">全選択</button>
-          </div>
-
-          <textarea id="markdownOutput" spellcheck="false" readonly></textarea>
-        </section>
+          </section>
+        </aside>
       </main>
     </div>
 
-    <template id="itemTemplate">
+    <template id="pieceTemplate">
       <article class="prompt-item" draggable="true">
         <div class="item-main">
-          <button class="drag-handle" type="button" aria-label="並べ替え" title="並べ替え">⋮⋮</button>
+          <button class="drag-handle" type="button" aria-label="並べ替え" title="並べ替え">☰</button>
           <div class="priority-badge" aria-label="優先順位"></div>
           <div class="item-fields">
             <div class="item-row">
@@ -127,6 +247,6 @@
       </article>
     </template>
 
-    <script src="app.js?v=20260614-1" defer></script>
+    <script src="app.js?v=20260616-4" defer></script>
   </body>
 </html>

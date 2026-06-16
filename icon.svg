@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
-  <title id="title">PromptWeaver</title>
-  <desc id="desc">PromptWeaver app icon</desc>
-  <rect width="256" height="256" rx="48" fill="#202426" />
-  <path d="M56 68h72c33 0 54 19 54 49s-21 50-54 50H92v45H56V68Zm36 31v37h32c14 0 22-7 22-19 0-11-8-18-22-18H92Z" fill="#dceee9" />
-  <path d="M158 143h27l14 38 14-38h28l-29 69h-26l-28-69Z" fill="#7fa9ff" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Midjourney Prompt Forge icon">
+  <rect width="512" height="512" rx="96" fill="#182025"/>
+  <path d="M88 352V160h47l47 82 47-82h47v192h-48V244l-32 56h-28l-32-56v108H88Z" fill="#ffffff"/>
+  <path d="M314 352c-33 0-59-10-78-31l31-36c13 14 27 21 43 21 22 0 33-13 33-40V160h51v109c0 27-7 48-21 62-14 14-34 21-59 21Z" fill="#8fd4e5"/>
+  <path d="M118 104h276" stroke="#c88052" stroke-width="24" stroke-linecap="round"/>
+  <path d="M118 408h276" stroke="#8fd4e5" stroke-width="24" stroke-linecap="round"/>
 </svg>

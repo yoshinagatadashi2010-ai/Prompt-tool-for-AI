@@ -1,65 +1,148 @@
-const STORAGE_KEY = "prompt-weaver-state-v2";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v1";
 const EMPTY_VALUE = "未入力";
-let serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
-const LAN_HOST_FALLBACK = serverConfig.lanHost || "192.168.11.4";
 
-const promptTemplates = {
-  image: {
-    label: "画像生成",
-    title: "画像生成プロンプト",
-    outputTone: "structured",
-    items: [
-      ["目的・用途", "例: 広告バナー、SNS投稿、商品紹介、企画書のキービジュアル"],
-      ["主題", "例: 人物、商品、キャラクター、建物、料理など中心に見せたいもの"],
-      ["シーン・背景", "例: 場所、時間帯、季節、天候、背景に置きたい要素"],
-      ["構図", "例: カメラ位置、距離、アングル、余白、視線誘導"],
-      ["スタイル", "例: 写真調、映画調、3D、アニメ、イラスト、ブランドトーン"],
-      ["ライティング", "例: 自然光、逆光、柔らかい影、ハイコントラスト"],
-      ["色・質感", "例: メインカラー、アクセントカラー、素材感、彩度"],
-      ["品質条件", "例: 高精細、シャープ、自然な手、破綻の少ない表情"],
-      ["除外要素", "例: 文字、ロゴ、余計な人物、ぼけ、低解像度、歪み"]
+let serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
+let draggedId = null;
+let pointerDrag = null;
+
+const sharedNegative =
+  "text, watermark, logo, signature, extra fingers, deformed hands, distorted face, blurry, low quality";
+
+const defaultParams = {
+  version: "v8.1",
+  aspectRatio: "1:1",
+  customAspect: "",
+  resolution: "",
+  stylize: 150,
+  chaos: 8,
+  weird: 0,
+  quality: "",
+  seed: "",
+  styleWeight: "",
+  rawMode: true,
+  tileMode: false,
+  publicMode: false,
+  stealthMode: false
+};
+
+const promptPresets = {
+  product: {
+    label: "商品",
+    title: "Premium product key visual",
+    goal: "EC・広告・SNSの商品ビジュアル",
+    outputFormat: "prompt",
+    negativePrompt: sharedNegative,
+    params: { ...defaultParams, aspectRatio: "4:5", stylize: 120, chaos: 5 },
+    pieces: [
+      ["主題", "single matte black skincare bottle with embossed silver label"],
+      ["環境", "warm stone bathroom counter, soft linen towel, minimal premium props"],
+      ["構図", "three-quarter front view, product centered, clean negative space"],
+      ["光", "soft window light from the left, gentle highlight on the bottle edge"],
+      ["質感", "realistic glass, brushed metal cap, fine surface detail, premium finish"],
+      ["スタイル", "high-end commercial product photography, natural color grading"]
     ]
   },
-  video: {
-    label: "動画生成",
-    title: "動画生成プロンプト",
-    outputTone: "production",
-    items: [
-      ["目的・用途", "例: 商品紹介、SNSショート、広告、説明動画、コンセプトムービー"],
-      ["主題", "例: 人物、商品、キャラクター、風景など中心に見せたいもの"],
-      ["シーン・背景", "例: 場所、時間帯、季節、空気感、背景の変化"],
-      ["動き", "例: 被写体の動作、表情の変化、速度、自然さ"],
-      ["カメラワーク", "例: ドリーイン、パン、固定、手持ち風、クローズアップ"],
-      ["尺・テンポ", "例: 秒数、カット数、リズム、トランジション"],
-      ["スタイル", "例: 実写風、映画調、広告調、アニメ、3D、ドキュメンタリー"],
-      ["音・演出", "例: BGM、効果音、ナレーション、無音、字幕の有無"],
-      ["除外要素", "例: ちらつき、不自然な動き、破綻した手、不要な文字"]
+  portrait: {
+    label: "人物",
+    title: "Editorial portrait concept",
+    goal: "プロフィール・広告・ビジュアル企画",
+    outputFormat: "prompt",
+    negativePrompt: sharedNegative,
+    params: { ...defaultParams, aspectRatio: "2:3", stylize: 100, chaos: 4, rawMode: true },
+    pieces: [
+      ["主題", "confident creative director in a tailored navy jacket"],
+      ["表情", "calm expression, direct but relaxed eye contact"],
+      ["環境", "modern daylight studio with subtle architectural shadows"],
+      ["構図", "waist-up portrait, 85mm lens look, shallow depth of field"],
+      ["光", "large softbox key light, delicate rim light, natural skin texture"],
+      ["スタイル", "editorial photography, refined color, realistic detail"]
+    ]
+  },
+  scene: {
+    label: "空間",
+    title: "Cinematic environment design",
+    goal: "背景美術・コンセプトアート・世界観設計",
+    outputFormat: "prompt",
+    negativePrompt: "text, watermark, logo, blurry, low quality, flat lighting, clutter",
+    params: { ...defaultParams, aspectRatio: "16:9", stylize: 220, chaos: 12 },
+    pieces: [
+      ["主題", "quiet coastal library built into white limestone cliffs"],
+      ["時間", "blue hour after sunset, warm light glowing through tall windows"],
+      ["環境", "misty sea below, narrow stone terraces, sparse pine trees"],
+      ["構図", "wide establishing shot, layered depth, leading lines toward the entrance"],
+      ["光", "cinematic contrast, warm interior light against cool ambient sky"],
+      ["スタイル", "high-detail environment concept art, atmospheric realism"]
+    ]
+  },
+  niji: {
+    label: "Niji",
+    title: "Niji character key art",
+    goal: "アニメ調キャラクター・ゲーム用キービジュアル",
+    outputFormat: "prompt",
+    negativePrompt: "text, watermark, logo, extra fingers, off-model face, blurry, low quality",
+    params: {
+      ...defaultParams,
+      version: "niji7",
+      aspectRatio: "3:2",
+      stylize: 300,
+      chaos: 10,
+      rawMode: false
+    },
+    pieces: [
+      ["主題", "young skyship mechanic with brass goggles and a cobalt work coat"],
+      ["デザイン", "expressive eyes, short tousled hair, tool belt with tiny charms"],
+      ["ポーズ", "standing on a floating dock, holding a glowing engine core"],
+      ["世界観", "sunny cloud harbor, small airships, hand-painted fantasy machinery"],
+      ["構図", "dynamic three-quarter composition, clear silhouette, strong focal point"],
+      ["スタイル", "clean anime key art, detailed linework, bright cel-shaded color"]
     ]
   }
 };
 
 let state = loadState();
-let draggedId = null;
-let pointerDrag = null;
 
 const elements = {
-  itemList: document.querySelector("#itemList"),
-  itemTemplate: document.querySelector("#itemTemplate"),
-  itemCount: document.querySelector("#itemCount"),
-  promptTitle: document.querySelector("#promptTitle"),
-  outputTone: document.querySelector("#outputTone"),
-  markdownOutput: document.querySelector("#markdownOutput"),
+  pieceList: document.querySelector("#pieceList"),
+  pieceTemplate: document.querySelector("#pieceTemplate"),
+  pieceCount: document.querySelector("#pieceCount"),
+  projectTitle: document.querySelector("#projectTitle"),
+  projectGoal: document.querySelector("#projectGoal"),
+  outputFormat: document.querySelector("#outputFormat"),
+  imageRefs: document.querySelector("#imageRefs"),
+  styleRefs: document.querySelector("#styleRefs"),
+  negativePrompt: document.querySelector("#negativePrompt"),
+  version: document.querySelector("#version"),
+  aspectRatio: document.querySelector("#aspectRatio"),
+  customAspect: document.querySelector("#customAspect"),
+  resolution: document.querySelector("#resolution"),
+  stylize: document.querySelector("#stylize"),
+  stylizeValue: document.querySelector("#stylizeValue"),
+  chaos: document.querySelector("#chaos"),
+  chaosValue: document.querySelector("#chaosValue"),
+  weird: document.querySelector("#weird"),
+  weirdValue: document.querySelector("#weirdValue"),
+  quality: document.querySelector("#quality"),
+  seed: document.querySelector("#seed"),
+  styleWeight: document.querySelector("#styleWeight"),
+  rawMode: document.querySelector("#rawMode"),
+  tileMode: document.querySelector("#tileMode"),
+  publicMode: document.querySelector("#publicMode"),
+  stealthMode: document.querySelector("#stealthMode"),
+  compatStatus: document.querySelector("#compatStatus"),
+  scoreRing: document.querySelector("#scoreRing"),
+  scoreText: document.querySelector("#scoreText"),
+  promptOutput: document.querySelector("#promptOutput"),
   copyStatus: document.querySelector("#copyStatus"),
   qrStatus: document.querySelector("#qrStatus"),
   qrCanvas: document.querySelector("#qrCanvas"),
   shareUrl: document.querySelector("#shareUrl"),
   refreshQr: document.querySelector("#refreshQr"),
   segments: [...document.querySelectorAll(".segment")],
-  addItem: document.querySelector("#addItem"),
-  copyMarkdown: document.querySelector("#copyMarkdown"),
+  addPiece: document.querySelector("#addPiece"),
+  copyPrompt: document.querySelector("#copyPrompt"),
   downloadMarkdown: document.querySelector("#downloadMarkdown"),
-  resetTemplate: document.querySelector("#resetTemplate"),
-  selectMarkdown: document.querySelector("#selectMarkdown")
+  resetPreset: document.querySelector("#resetPreset"),
+  selectOutput: document.querySelector("#selectOutput")
 };
 
 loadServerConfig().finally(initialize);
@@ -80,105 +163,189 @@ async function loadServerConfig() {
 }
 
 function initialize() {
-  elements.promptTitle.value = state.title;
-  elements.outputTone.value = state.outputTone;
+  syncControlsFromState();
   elements.shareUrl.value = getInitialShareUrl();
   bindEvents();
-  render();
+  renderPieces();
   renderQr();
   registerServiceWorker();
 }
 
 function bindEvents() {
-  elements.promptTitle.addEventListener("input", () => {
-    state.title = elements.promptTitle.value;
+  elements.projectTitle.addEventListener("input", () => {
+    state.title = elements.projectTitle.value;
     updateOutput();
   });
 
-  elements.outputTone.addEventListener("change", () => {
-    state.outputTone = elements.outputTone.value;
+  elements.projectGoal.addEventListener("input", () => {
+    state.goal = elements.projectGoal.value;
     updateOutput();
   });
 
-  elements.addItem.addEventListener("click", () => {
-    state.items.push(createItem("新しい項目", "", "自由に入力"));
-    render();
+  elements.outputFormat.addEventListener("change", () => {
+    state.outputFormat = elements.outputFormat.value;
+    updateOutput();
   });
 
-  elements.copyMarkdown.addEventListener("click", copyMarkdown);
+  elements.imageRefs.addEventListener("input", () => {
+    state.imageRefs = elements.imageRefs.value;
+    updateOutput();
+  });
+
+  elements.styleRefs.addEventListener("input", () => {
+    state.styleRefs = elements.styleRefs.value;
+    updateOutput();
+  });
+
+  elements.negativePrompt.addEventListener("input", () => {
+    state.negativePrompt = elements.negativePrompt.value;
+    updateOutput();
+  });
+
+  bindParam("version");
+  bindParam("aspectRatio");
+  bindParam("customAspect");
+  bindParam("resolution");
+  bindParam("stylize", true);
+  bindParam("chaos", true);
+  bindParam("weird", true);
+  bindParam("quality");
+  bindParam("seed");
+  bindParam("styleWeight");
+  bindParam("rawMode");
+  bindParam("tileMode");
+  bindParam("publicMode");
+  bindParam("stealthMode");
+
+  elements.addPiece.addEventListener("click", () => {
+    state.pieces.push(createPiece("追加項目", ""));
+    renderPieces();
+    setStatus("項目を追加しました");
+  });
+
+  elements.copyPrompt.addEventListener("click", copyPrompt);
   elements.downloadMarkdown.addEventListener("click", downloadMarkdown);
-  elements.resetTemplate.addEventListener("click", resetTemplate);
+  elements.resetPreset.addEventListener("click", resetPreset);
   elements.refreshQr.addEventListener("click", renderQr);
   elements.shareUrl.addEventListener("input", renderQr);
-  elements.selectMarkdown.addEventListener("click", () => {
-    elements.markdownOutput.focus();
-    elements.markdownOutput.select();
+
+  elements.selectOutput.addEventListener("click", () => {
+    elements.promptOutput.focus();
+    elements.promptOutput.select();
   });
 
   elements.segments.forEach((segment) => {
     segment.addEventListener("click", () => {
-      const nextType = segment.dataset.type;
-      if (nextType === state.type) return;
+      const nextPreset = segment.dataset.preset;
+      if (nextPreset === state.preset) return;
 
-      Object.assign(state, createTemplateState(nextType));
-      elements.promptTitle.value = state.title;
-      elements.outputTone.value = state.outputTone;
-      render();
+      state = createPresetState(nextPreset);
+      syncControlsFromState();
+      renderPieces();
+      setStatus(`${promptPresets[nextPreset].label}プリセットに切り替えました`);
     });
   });
 }
 
-function render() {
-  elements.itemList.replaceChildren();
+function bindParam(name, numeric = false) {
+  const element = elements[name];
+  const eventName = element.type === "checkbox" ? "change" : "input";
 
-  state.items.forEach((item, index) => {
-    const node = elements.itemTemplate.content.firstElementChild.cloneNode(true);
+  element.addEventListener(eventName, () => {
+    let value = element.type === "checkbox" ? element.checked : element.value;
+    if (numeric && value !== "") value = Number(value);
+
+    state.params[name] = value;
+
+    if (name === "publicMode" && value) {
+      state.params.stealthMode = false;
+      elements.stealthMode.checked = false;
+    }
+
+    if (name === "stealthMode" && value) {
+      state.params.publicMode = false;
+      elements.publicMode.checked = false;
+    }
+
+    updateRangeLabels();
+    updateOutput();
+  });
+}
+
+function syncControlsFromState() {
+  elements.projectTitle.value = state.title;
+  elements.projectGoal.value = state.goal;
+  elements.outputFormat.value = state.outputFormat;
+  elements.imageRefs.value = state.imageRefs;
+  elements.styleRefs.value = state.styleRefs;
+  elements.negativePrompt.value = state.negativePrompt;
+
+  Object.entries(state.params).forEach(([key, value]) => {
+    const element = elements[key];
+    if (!element) return;
+    if (element.type === "checkbox") {
+      element.checked = Boolean(value);
+    } else {
+      element.value = value;
+    }
+  });
+
+  updateRangeLabels();
+}
+
+function updateRangeLabels() {
+  elements.stylizeValue.textContent = String(state.params.stylize);
+  elements.chaosValue.textContent = String(state.params.chaos);
+  elements.weirdValue.textContent = String(state.params.weird);
+}
+
+function renderPieces() {
+  elements.pieceList.replaceChildren();
+
+  state.pieces.forEach((piece, index) => {
+    const node = elements.pieceTemplate.content.firstElementChild.cloneNode(true);
     const handle = node.querySelector(".drag-handle");
     const priority = node.querySelector(".priority-badge");
     const nameField = node.querySelector(".field-name");
     const contentField = node.querySelector(".field-content");
     const enabledField = node.querySelector(".field-enabled");
 
-    node.dataset.id = item.id;
+    node.dataset.id = piece.id;
     node.draggable = false;
     priority.textContent = `P${index + 1}`;
     priority.setAttribute("aria-label", `優先順位 ${index + 1}`);
-    nameField.value = item.name;
-    contentField.value = item.content;
-    contentField.placeholder = item.placeholder;
-    enabledField.checked = item.enabled;
+    nameField.value = piece.name;
+    contentField.value = piece.content;
+    contentField.placeholder = piece.placeholder || "";
+    enabledField.checked = piece.enabled;
 
     nameField.addEventListener("input", (event) => {
-      item.name = event.target.value;
+      piece.name = event.target.value;
       updateOutput();
     });
 
     contentField.addEventListener("input", (event) => {
-      item.content = event.target.value;
+      piece.content = event.target.value;
       updateOutput();
     });
 
     enabledField.addEventListener("change", (event) => {
-      item.enabled = event.target.checked;
+      piece.enabled = event.target.checked;
       updateOutput();
     });
 
-    node.querySelector(".move-up").addEventListener("click", () => moveItem(index, index - 1));
-    node.querySelector(".move-down").addEventListener("click", () => moveItem(index, index + 1));
-    node.querySelector(".duplicate").addEventListener("click", () => duplicateItem(index));
-    node.querySelector(".remove").addEventListener("click", () => removeItem(index));
-
-    handle.addEventListener("pointerdown", () => {
-      node.draggable = true;
-    });
-
-    handle.addEventListener("pointerup", () => {
-      node.draggable = false;
-    });
+    node.querySelector(".move-up").addEventListener("click", () => movePiece(index, index - 1));
+    node.querySelector(".move-down").addEventListener("click", () => movePiece(index, index + 1));
+    node.querySelector(".duplicate").addEventListener("click", () => duplicatePiece(index));
+    node.querySelector(".remove").addEventListener("click", () => removePiece(index));
 
     handle.addEventListener("pointerdown", (event) => {
-      if (event.pointerType === "mouse") return;
-      startPointerReorder(event, node, item.id);
+      if (event.pointerType === "mouse") {
+        node.draggable = true;
+        return;
+      }
+
+      startPointerReorder(event, node, piece.id);
     });
 
     handle.addEventListener("pointermove", updatePointerReorder);
@@ -186,10 +353,15 @@ function render() {
     handle.addEventListener("pointercancel", cancelPointerReorder);
 
     node.addEventListener("dragstart", (event) => {
-      draggedId = item.id;
+      if (!event.target.closest(".drag-handle")) {
+        event.preventDefault();
+        return;
+      }
+
+      draggedId = piece.id;
       node.classList.add("is-dragging");
       event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", item.id);
+      event.dataTransfer.setData("text/plain", piece.id);
     });
 
     node.addEventListener("dragend", () => {
@@ -200,7 +372,7 @@ function render() {
 
     node.addEventListener("dragover", (event) => {
       event.preventDefault();
-      if (!draggedId || draggedId === item.id) return;
+      if (!draggedId || draggedId === piece.id) return;
 
       const rect = node.getBoundingClientRect();
       const placeAfter = event.clientY > rect.top + rect.height / 2;
@@ -218,15 +390,15 @@ function render() {
       event.preventDefault();
       const sourceId = draggedId || event.dataTransfer.getData("text/plain");
       const placeAfter = node.dataset.dropPosition === "after";
-      reorderById(sourceId, item.id, placeAfter);
+      reorderById(sourceId, piece.id, placeAfter);
       clearDragMarkers();
     });
 
-    elements.itemList.append(node);
+    elements.pieceList.append(node);
   });
 
   elements.segments.forEach((segment) => {
-    const isActive = segment.dataset.type === state.type;
+    const isActive = segment.dataset.preset === state.preset;
     segment.classList.toggle("is-active", isActive);
     segment.setAttribute("aria-checked", String(isActive));
   });
@@ -234,58 +406,62 @@ function render() {
   updateOutput();
 }
 
-function moveItem(fromIndex, toIndex) {
-  if (toIndex < 0 || toIndex >= state.items.length) return;
-  const [item] = state.items.splice(fromIndex, 1);
-  state.items.splice(toIndex, 0, item);
-  render();
+function movePiece(fromIndex, toIndex) {
+  if (toIndex < 0 || toIndex >= state.pieces.length) return;
+  const [piece] = state.pieces.splice(fromIndex, 1);
+  state.pieces.splice(toIndex, 0, piece);
+  renderPieces();
 }
 
-function duplicateItem(index) {
-  const original = state.items[index];
-  const copy = createItem(`${original.name} コピー`, original.content, original.placeholder);
+function duplicatePiece(index) {
+  const original = state.pieces[index];
+  const copy = createPiece(`${original.name} コピー`, original.content, original.placeholder);
   copy.enabled = original.enabled;
-  state.items.splice(index + 1, 0, copy);
-  render();
+  state.pieces.splice(index + 1, 0, copy);
+  renderPieces();
 }
 
-function removeItem(index) {
-  if (state.items.length === 1) {
+function removePiece(index) {
+  if (state.pieces.length === 1) {
     setStatus("最後の1項目は残します");
     return;
   }
-  state.items.splice(index, 1);
-  render();
+
+  state.pieces.splice(index, 1);
+  renderPieces();
 }
 
 function reorderById(sourceId, targetId, placeAfter) {
   if (!sourceId || sourceId === targetId) return;
 
-  const fromIndex = state.items.findIndex((item) => item.id === sourceId);
-  const targetIndex = state.items.findIndex((item) => item.id === targetId);
+  const fromIndex = state.pieces.findIndex((piece) => piece.id === sourceId);
+  const targetIndex = state.pieces.findIndex((piece) => piece.id === targetId);
   if (fromIndex === -1 || targetIndex === -1) return;
 
-  const [item] = state.items.splice(fromIndex, 1);
+  const [piece] = state.pieces.splice(fromIndex, 1);
   let insertIndex = targetIndex + (placeAfter ? 1 : 0);
   if (fromIndex < insertIndex) insertIndex -= 1;
-  state.items.splice(insertIndex, 0, item);
-  render();
+  state.pieces.splice(insertIndex, 0, piece);
+  renderPieces();
 }
 
-function startPointerReorder(event, node, itemId) {
-  if (state.items.length < 2) return;
+function startPointerReorder(event, node, pieceId) {
+  if (state.pieces.length < 2) return;
 
   event.preventDefault();
   pointerDrag = {
-    id: itemId,
+    id: pieceId,
     pointerId: event.pointerId,
     targetId: null,
     placeAfter: false
   };
-  draggedId = itemId;
+  draggedId = pieceId;
   node.classList.add("is-dragging");
   document.body.classList.add("is-reordering");
-  event.currentTarget.setPointerCapture(event.pointerId);
+
+  if (event.currentTarget.setPointerCapture) {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
 }
 
 function updatePointerReorder(event) {
@@ -294,7 +470,7 @@ function updatePointerReorder(event) {
   event.preventDefault();
   const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".prompt-item");
   clearDragMarkers();
-  findPromptItemNode(pointerDrag.id)?.classList.add("is-dragging");
+  findPieceNode(pointerDrag.id)?.classList.add("is-dragging");
 
   if (!target || target.dataset.id === pointerDrag.id) {
     pointerDrag.targetId = null;
@@ -332,27 +508,33 @@ function cancelPointerReorder(event) {
   clearDragMarkers();
 }
 
-function findPromptItemNode(itemId) {
-  return [...document.querySelectorAll(".prompt-item")].find((node) => node.dataset.id === itemId);
+function findPieceNode(pieceId) {
+  return [...document.querySelectorAll(".prompt-item")].find((node) => node.dataset.id === pieceId);
 }
 
-function resetTemplate() {
-  Object.assign(state, createTemplateState(state.type));
-  elements.promptTitle.value = state.title;
-  elements.outputTone.value = state.outputTone;
-  render();
-  setStatus("テンプレートを初期化しました");
+function clearDragMarkers() {
+  document.querySelectorAll(".prompt-item").forEach((node) => {
+    node.classList.remove("is-dragging", "is-over-before", "is-over-after");
+    delete node.dataset.dropPosition;
+  });
 }
 
-async function copyMarkdown() {
-  const promptText = buildCopyPrompt();
+function resetPreset() {
+  state = createPresetState(state.preset);
+  syncControlsFromState();
+  renderPieces();
+  setStatus("プリセットを初期化しました");
+}
+
+async function copyPrompt() {
+  const promptText = buildPromptText();
 
   try {
     await navigator.clipboard.writeText(promptText);
-    setStatus("プロンプト本文をコピーしました");
+    setStatus("プロンプトをコピーしました");
   } catch {
     const copied = copyTextFallback(promptText);
-    setStatus(copied ? "プロンプト本文をコピーしました" : "コピーできませんでした");
+    setStatus(copied ? "プロンプトをコピーしました" : "コピーできませんでした");
   }
 }
 
@@ -361,25 +543,30 @@ function copyTextFallback(text) {
   textarea.value = text;
   textarea.setAttribute("readonly", "");
   textarea.style.position = "fixed";
-  textarea.style.inset = "0 auto auto -9999px";
+  textarea.style.top = "0";
+  textarea.style.left = "0";
+  textarea.style.opacity = "0";
+  textarea.style.fontSize = "16px";
   document.body.appendChild(textarea);
   textarea.focus();
   textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
   const copied = document.execCommand("copy");
   textarea.remove();
   return copied;
 }
 
 function downloadMarkdown() {
-  const markdown = elements.markdownOutput.value;
+  const markdown = buildMarkdownPackage();
   const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-  const safeTitle = (state.title || "prompt").replace(/[\\/:*?"<>|]/g, "_");
+  const safeTitle = (state.title || "midjourney-prompt").replace(/[\\/:*?"<>|]/g, "_");
   const fileName = `${safeTitle}.md`;
 
   if (navigator.canShare && navigator.share) {
     const file = new File([blob], fileName, { type: "text/markdown" });
     if (navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: state.title || "PromptWeaver" })
+      navigator
+        .share({ files: [file], title: state.title || "Midjourney Prompt Forge" })
         .then(() => setStatus("Markdownを共有しました"))
         .catch(() => setStatus("共有をキャンセルしました"));
       return;
@@ -408,98 +595,210 @@ function setQrStatus(message) {
 }
 
 function updateOutput() {
-  const enabledCount = state.items.filter((item) => item.enabled).length;
-  elements.itemCount.textContent = `${state.items.length}項目 / 出力${enabledCount}項目`;
-  elements.markdownOutput.value = buildMarkdown();
+  const enabledCount = state.pieces.filter((piece) => piece.enabled).length;
+  elements.pieceCount.textContent = `${state.pieces.length}項目 / 出力 ${enabledCount}項目`;
+  elements.promptOutput.value = buildDisplayOutput();
+  updateCompatibilityStatus();
+  updateScore();
   saveState();
 }
 
-function buildMarkdown() {
-  const template = promptTemplates[state.type];
-  const title = normalizeInline(state.title) || template.title;
-  const enabledItems = state.items.filter((item) => item.enabled);
-
-  if (state.outputTone === "compact") {
-    return buildCompactMarkdown(title, template.label, enabledItems);
-  }
-
-  if (state.outputTone === "production") {
-    return buildProductionMarkdown(title, template.label, enabledItems);
-  }
-
-  return buildStructuredMarkdown(title, template.label, enabledItems);
+function buildDisplayOutput() {
+  if (state.outputFormat === "brief") return buildBriefOutput();
+  if (state.outputFormat === "markdown") return buildMarkdownPackage();
+  return buildPromptText();
 }
 
-function buildCopyPrompt() {
-  const enabledItems = state.items.filter((item) => item.enabled);
-  return finishMarkdown([buildPromptBlock(enabledItems)]);
+function buildPromptText() {
+  const imageRefs = splitRefs(state.imageRefs).join(" ");
+  const positive = state.pieces
+    .filter((piece) => piece.enabled)
+    .map((piece) => normalizePromptClause(piece.content))
+    .filter(Boolean)
+    .join(", ");
+  const parameters = buildParameterTokens().join(" ");
+
+  return [imageRefs, positive, parameters].filter(Boolean).join(" ").trim() || "Describe the image --ar 1:1 --v 8.1";
 }
 
-function buildStructuredMarkdown(title, kind, items) {
+function buildBriefOutput() {
   const lines = [
-    `# ${title}`,
+    "Midjourney prompt:",
+    buildPromptText(),
     "",
-    `- 種別: ${kind}`,
-    "- 出力形式: 構造化",
-    "",
-    "## 項目別プロンプト"
+    "Brief:",
+    `- 作品名: ${normalizeInline(state.title) || EMPTY_VALUE}`,
+    `- 用途: ${normalizeInline(state.goal) || EMPTY_VALUE}`,
+    `- プリセット: ${promptPresets[state.preset].label}`,
+    `- モデル: ${describeVersion(state.params.version)}`,
+    `- 比率: ${resolveAspectRatio()}`
   ];
 
-  appendDetailedItems(lines, items);
-
-  return finishMarkdown(lines);
+  return finishText(lines);
 }
 
-function buildCompactMarkdown(title, kind, items) {
+function buildMarkdownPackage() {
+  const activePieces = state.pieces.filter((piece) => piece.enabled);
   const lines = [
-    `# ${title}`,
+    `# ${normalizeInline(state.title) || "Midjourney Prompt"}`,
     "",
-    `**${kind}プロンプト**`,
+    "## Prompt",
     "",
-    buildPromptBlock(items)
+    "```text",
+    buildPromptText(),
+    "```",
+    "",
+    "## Settings",
+    "",
+    `- Preset: ${promptPresets[state.preset].label}`,
+    `- Goal: ${normalizeInline(state.goal) || EMPTY_VALUE}`,
+    `- Model: ${describeVersion(state.params.version)}`,
+    `- Aspect ratio: ${resolveAspectRatio()}`,
+    `- Stylize: ${state.params.stylize}`,
+    `- Chaos: ${state.params.chaos}`,
+    `- Weird: ${state.params.weird}`,
+    "",
+    "## Prompt Pieces"
   ];
 
-  return finishMarkdown(lines);
-}
-
-function buildProductionMarkdown(title, kind, items) {
-  const lines = [
-    `# ${title}`,
-    "",
-    "## 制作概要",
-    `- 種別: ${kind}`,
-    `- 出力項目数: ${items.length}`,
-    "- 優先順位: P1から順に強く反映",
-    "",
-    "## 優先順位付き指示"
-  ];
-
-  appendDetailedItems(lines, items);
-
-  return finishMarkdown(lines);
-}
-
-function appendDetailedItems(lines, items) {
-  if (!items.length) {
-    lines.push("", "出力対象の項目がありません。");
-    return;
-  }
-
-  items.forEach((item, index) => {
-    lines.push("", `### P${index + 1}: ${normalizeInline(item.name)}`, normalizeBlock(item.content));
+  activePieces.forEach((piece, index) => {
+    lines.push("", `### P${index + 1}: ${normalizeInline(piece.name) || "項目"}`, normalizeBlock(piece.content));
   });
+
+  return finishText(lines);
 }
 
-function buildPromptBlock(items) {
-  if (!items.length) return "出力対象の項目がありません。";
+function buildParameterTokens() {
+  const params = [];
+  const version = state.params.version;
+  const aspectRatio = resolveAspectRatio();
+  const noList = normalizeNoList(state.negativePrompt);
+  const styleRefs = splitRefs(state.styleRefs);
+  const stylize = clampNumber(state.params.stylize, 0, 1000, 100);
+  const chaos = clampNumber(state.params.chaos, 0, 100, 0);
+  const weird = clampNumber(state.params.weird, 0, 3000, 0);
+  const seed = normalizeInteger(state.params.seed);
+  const styleWeight = normalizeInteger(state.params.styleWeight);
 
-  return items
-    .map((item, index) => `P${index + 1} ${normalizeInline(item.name)}: ${normalizeBlock(item.content)}`)
-    .join("\n");
+  if (aspectRatio) params.push("--ar", aspectRatio);
+
+  if (version === "niji7") {
+    params.push("--niji", "7");
+  } else if (version === "v7") {
+    params.push("--v", "7");
+  } else if (version === "v6.1") {
+    params.push("--v", "6.1");
+  } else {
+    params.push("--v", "8.1");
+  }
+
+  if (state.params.rawMode && version !== "niji7") params.push("--raw");
+  if (state.params.resolution && version === "v8.1") params.push(`--${state.params.resolution}`);
+  if (stylize !== 100) params.push("--s", String(stylize));
+  if (chaos > 0) params.push("--c", String(chaos));
+  if (weird > 0) params.push("--w", String(weird));
+  if (state.params.quality && version !== "v8.1") params.push("--q", state.params.quality);
+  if (seed !== "") params.push("--seed", seed);
+  if (state.params.tileMode) params.push("--tile");
+  if (styleRefs.length) params.push("--sref", ...styleRefs);
+  if (styleRefs.length && styleWeight !== "") params.push("--sw", styleWeight);
+  if (noList) params.push("--no", noList);
+  if (state.params.stealthMode) params.push("--stealth");
+  if (state.params.publicMode) params.push("--public");
+
+  return params;
 }
 
-function finishMarkdown(lines) {
-  return `${lines.join("\n").trim()}\n`;
+function updateCompatibilityStatus() {
+  const notes = [];
+  const version = state.params.version;
+
+  notes.push(describeVersion(version));
+  if (state.params.rawMode && version !== "niji7") notes.push("Raw");
+  if (state.params.resolution && version === "v8.1") notes.push(state.params.resolution.toUpperCase());
+  if (state.params.resolution && version !== "v8.1") notes.push("HD/SDはV8.1時のみ出力");
+  if (state.params.quality && version === "v8.1") notes.push("QualityはV8.1では省略");
+  if (state.params.rawMode && version === "niji7") notes.push("NijiではRawを省略");
+  if (state.params.stealthMode) notes.push("Stealth");
+  if (state.params.publicMode) notes.push("Public");
+
+  elements.compatStatus.textContent = notes.join(" / ");
+}
+
+function updateScore() {
+  const enabledPieces = state.pieces.filter((piece) => piece.enabled);
+  const filledPieces = enabledPieces.filter((piece) => normalizeBlock(piece.content) !== EMPTY_VALUE);
+  const hasSubject = filledPieces.some((piece) => /主題|商品|人物|キャラ|subject/i.test(piece.name));
+  const hasComposition = filledPieces.some((piece) => /構図|camera|lens|composition|ポーズ/i.test(piece.name));
+  const hasLight = filledPieces.some((piece) => /光|lighting|light/i.test(piece.name));
+  const hasStyle = filledPieces.some((piece) => /スタイル|style|質感|design/i.test(piece.name));
+  const hasNegative = Boolean(normalizeNoList(state.negativePrompt));
+
+  let score = Math.min(45, filledPieces.length * 8);
+  if (hasSubject) score += 18;
+  if (hasComposition) score += 12;
+  if (hasLight) score += 10;
+  if (hasStyle) score += 10;
+  if (hasNegative) score += 5;
+  score = Math.min(100, score);
+
+  elements.scoreRing.textContent = String(score);
+  elements.scoreRing.style.setProperty("--score", `${score}%`);
+
+  if (score >= 85) {
+    elements.scoreText.textContent = "本番投入しやすい密度です";
+  } else if (score >= 65) {
+    elements.scoreText.textContent = "主題・構図・光はおおむね揃っています";
+  } else {
+    elements.scoreText.textContent = "主題、構図、光、スタイルを埋めると安定します";
+  }
+}
+
+function resolveAspectRatio() {
+  if (state.params.aspectRatio !== "custom") return state.params.aspectRatio || "1:1";
+
+  const custom = String(state.params.customAspect || "").trim();
+  if (/^[1-9]\d{0,3}:[1-9]\d{0,3}$/.test(custom)) return custom;
+  return "1:1";
+}
+
+function describeVersion(version) {
+  const labels = {
+    "v8.1": "V8.1",
+    v7: "V7",
+    niji7: "Niji 7",
+    "v6.1": "V6.1"
+  };
+
+  return labels[version] || "V8.1";
+}
+
+function splitRefs(value) {
+  return normalizeBlock(value)
+    .split(/[\s,]+/)
+    .map((item) => item.trim())
+    .filter((item) => /^https?:\/\//i.test(item));
+}
+
+function normalizeNoList(value) {
+  return normalizeBlock(value)
+    .split(/,|\n/)
+    .map((item) => item.replace(/^--?no\s+/i, "").trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function normalizePromptClause(value) {
+  const content = normalizeBlock(value);
+  if (content === EMPTY_VALUE) return "";
+
+  return content
+    .replace(/\r\n/g, "\n")
+    .replace(/\s*\n+\s*/g, ", ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+,/g, ",")
+    .replace(/,{2,}/g, ",")
+    .trim();
 }
 
 function normalizeBlock(value) {
@@ -511,7 +810,25 @@ function normalizeBlock(value) {
 }
 
 function normalizeInline(value) {
-  return normalizeBlock(value).replace(/\s+/g, " ");
+  const content = normalizeBlock(value);
+  return content === EMPTY_VALUE ? "" : content.replace(/\s+/g, " ");
+}
+
+function clampNumber(value, min, max, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, number));
+}
+
+function normalizeInteger(value) {
+  if (value === "" || value === null || value === undefined) return "";
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) return "";
+  return String(Math.floor(number));
+}
+
+function finishText(lines) {
+  return `${lines.join("\n").trim()}\n`;
 }
 
 function loadState() {
@@ -519,35 +836,47 @@ function loadState() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (isValidSavedState(saved)) {
       return {
-        type: saved.type,
-        title: saved.title || promptTemplates[saved.type].title,
-        outputTone: saved.outputTone || promptTemplates[saved.type].outputTone,
-        items: saved.items.map(normalizeSavedItem)
+        preset: saved.preset,
+        title: saved.title || promptPresets[saved.preset].title,
+        goal: saved.goal || promptPresets[saved.preset].goal,
+        outputFormat: saved.outputFormat || "prompt",
+        imageRefs: saved.imageRefs || "",
+        styleRefs: saved.styleRefs || "",
+        negativePrompt: saved.negativePrompt || promptPresets[saved.preset].negativePrompt,
+        params: normalizeSavedParams(saved.params, saved.preset),
+        pieces: saved.pieces.map(normalizeSavedPiece)
       };
     }
   } catch {
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  return createTemplateState("image");
+  return createPresetState("product");
 }
 
 function isValidSavedState(saved) {
   return (
     saved &&
-    promptTemplates[saved.type] &&
-    Array.isArray(saved.items) &&
-    saved.items.length > 0
+    promptPresets[saved.preset] &&
+    Array.isArray(saved.pieces) &&
+    saved.pieces.length > 0
   );
 }
 
-function normalizeSavedItem(item) {
+function normalizeSavedParams(params, preset) {
   return {
-    id: item.id || createId(),
-    name: item.name || "項目",
-    content: item.content || "",
-    placeholder: item.placeholder || "自由に入力",
-    enabled: item.enabled !== false
+    ...promptPresets[preset].params,
+    ...(params || {})
+  };
+}
+
+function normalizeSavedPiece(piece) {
+  return {
+    id: piece.id || createId(),
+    name: piece.name || "項目",
+    content: piece.content || "",
+    placeholder: piece.placeholder || "",
+    enabled: piece.enabled !== false
   };
 }
 
@@ -555,22 +884,27 @@ function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
-    setStatus("ローカル保存できません");
+    setStatus("ローカル保存できませんでした");
   }
 }
 
-function createTemplateState(type) {
-  const template = promptTemplates[type];
+function createPresetState(presetName) {
+  const preset = promptPresets[presetName] || promptPresets.product;
 
   return {
-    type,
-    title: template.title,
-    outputTone: template.outputTone,
-    items: template.items.map(([name, placeholder]) => createItem(name, "", placeholder))
+    preset: presetName,
+    title: preset.title,
+    goal: preset.goal,
+    outputFormat: preset.outputFormat,
+    imageRefs: "",
+    styleRefs: "",
+    negativePrompt: preset.negativePrompt,
+    params: { ...preset.params },
+    pieces: preset.pieces.map(([name, placeholder]) => createPiece(name, placeholder, placeholder))
   };
 }
 
-function createItem(name, content, placeholder) {
+function createPiece(name, content, placeholder = "") {
   return {
     id: createId(),
     name,
@@ -585,14 +919,7 @@ function createId() {
     return crypto.randomUUID();
   }
 
-  return `item-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function clearDragMarkers() {
-  document.querySelectorAll(".prompt-item").forEach((node) => {
-    node.classList.remove("is-dragging", "is-over-before", "is-over-after");
-    delete node.dataset.dropPosition;
-  });
+  return `piece-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function getInitialShareUrl() {
@@ -602,11 +929,15 @@ function getInitialShareUrl() {
 
   if (localHosts.includes(window.location.hostname)) {
     const port = window.location.port ? `:${window.location.port}` : "";
-    return `${window.location.protocol}//${LAN_HOST_FALLBACK}${port}${window.location.pathname}`;
+    return `${window.location.protocol}//${getLanHostFallback()}${port}${window.location.pathname}`;
   }
 
   if (window.location.protocol !== "file:") return currentUrl;
-  return `http://${LAN_HOST_FALLBACK}:8765/index.html`;
+  return `http://${getLanHostFallback()}:8765/index.html`;
+}
+
+function getLanHostFallback() {
+  return serverConfig.lanHost || "192.168.11.4";
 }
 
 function renderQr() {
@@ -618,6 +949,7 @@ function renderQr() {
 
   if (!value) {
     setQrStatus("共有URLを入力してください");
+    drawQrPlaceholder(canvas);
     return;
   }
 
@@ -625,7 +957,7 @@ function renderQr() {
     const qr = createQrMatrix(value);
     drawQr(canvas, qr.modules);
     if (/^https?:\/\/(127\.0\.0\.1|localhost|\[::1\]|::1)/.test(value)) {
-      setQrStatus("127.0.0.1はスマホでは開けません。LAN IPのURLにしてください");
+      setQrStatus("スマホではLAN IPか公開URLを使ってください");
     } else {
       setQrStatus("QRコードを更新しました");
     }
@@ -644,7 +976,7 @@ function drawQr(canvas, modules) {
 
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = "#121615";
+  context.fillStyle = "#182025";
 
   modules.forEach((row, y) => {
     row.forEach((dark, x) => {
@@ -659,13 +991,13 @@ function drawQrPlaceholder(canvas) {
   const context = canvas.getContext("2d");
   context.fillStyle = "#ffffff";
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.strokeStyle = "#d6dde3";
+  context.strokeStyle = "#d8e0e6";
   context.lineWidth = 2;
   context.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
-  context.fillStyle = "#607078";
+  context.fillStyle = "#60717d";
   context.font = "12px sans-serif";
   context.textAlign = "center";
-  context.fillText("URLを短くしてください", canvas.width / 2, canvas.height / 2);
+  context.fillText("URLを入力", canvas.width / 2, canvas.height / 2);
 }
 
 function createQrMatrix(text) {
@@ -917,7 +1249,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260614-1").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260616-4").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
