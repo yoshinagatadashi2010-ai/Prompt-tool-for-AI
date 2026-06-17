@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v2-empty-default";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v3-field-defaults";
 const EMPTY_VALUE = "未入力";
 
 let serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
@@ -1286,7 +1286,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260616-9").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-1").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
