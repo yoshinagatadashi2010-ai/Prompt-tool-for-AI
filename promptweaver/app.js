@@ -1,4 +1,5 @@
 const STORAGE_KEY = "prompt-weaver-state-v2";
+const FORGE_HANDOFF_KEY = "midjourney-prompt-forge-to-promptweaver-v1";
 const EMPTY_VALUE = "未入力";
 let serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
 const LAN_HOST_FALLBACK = serverConfig.lanHost || "192.168.11.4";
@@ -431,6 +432,10 @@ function buildMarkdown() {
     return buildProductionMarkdown(title, template.label, enabledItems);
   }
 
+  if (state.outputTone === "generic") {
+    return buildGenericMarkdown(title, enabledItems);
+  }
+
   return buildStructuredMarkdown(title, template.label, enabledItems);
 }
 
@@ -483,6 +488,53 @@ function buildProductionMarkdown(title, kind, items) {
   return finishMarkdown(lines);
 }
 
+function buildGenericMarkdown(title, items) {
+  const purpose = findItemContent(items, ["目的", "用途"]);
+  const aspectRatio = findItemContent(items, ["アスペクト比", "比率"]);
+  const negativePrompt = findItemContent(items, ["ネガティブプロンプト", "除外要素"]);
+  const promptItems = items.filter((item) => {
+    const name = normalizeOptionalInline(item.name);
+    const content = normalizeOptionalBlock(item.content);
+    return content && !isGenericMetaName(name);
+  });
+
+  const lines = [`# ${title}`];
+
+  if (purpose) {
+    lines.push("", "## 目的", purpose);
+  }
+
+  lines.push("", "## 画像生成プロンプト");
+  if (promptItems.length) {
+    promptItems.forEach((item) => {
+      const name = normalizeOptionalInline(item.name);
+      const content = normalizeOptionalBlock(item.content);
+      lines.push(name ? `${name}: ${content}` : content);
+    });
+  } else {
+    lines.push(EMPTY_VALUE);
+  }
+
+  if (aspectRatio) {
+    lines.push("", "## アスペクト比", aspectRatio);
+  }
+
+  if (negativePrompt) {
+    lines.push("", "## ネガティブプロンプト", negativePrompt);
+  }
+
+  return finishMarkdown(lines);
+}
+
+function findItemContent(items, names) {
+  const match = items.find((item) => names.includes(normalizeOptionalInline(item.name)));
+  return match ? normalizeOptionalBlock(match.content) : "";
+}
+
+function isGenericMetaName(name) {
+  return ["目的", "用途", "アスペクト比", "比率", "ネガティブプロンプト", "除外要素"].includes(name);
+}
+
 function appendDetailedItems(lines, items) {
   if (!items.length) {
     lines.push("", "出力対象の項目がありません。");
@@ -518,7 +570,20 @@ function normalizeInline(value) {
   return normalizeBlock(value).replace(/\s+/g, " ");
 }
 
+function normalizeOptionalBlock(value) {
+  return String(value || "")
+    .replace(/\r\n/g, "\n")
+    .trim();
+}
+
+function normalizeOptionalInline(value) {
+  return normalizeOptionalBlock(value).replace(/\s+/g, " ");
+}
+
 function loadState() {
+  const handoffState = consumeForgeHandoff();
+  if (handoffState) return handoffState;
+
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (isValidSavedState(saved)) {
@@ -534,6 +599,101 @@ function loadState() {
   }
 
   return createTemplateState("image");
+}
+
+function consumeForgeHandoff() {
+  const payload = readForgeHandoffFromStorage() || readForgeHandoffFromQuery();
+  if (!isValidForgeHandoff(payload)) return null;
+  return createStateFromForgeHandoff(payload);
+}
+
+function readForgeHandoffFromStorage() {
+  try {
+    const raw = localStorage.getItem(FORGE_HANDOFF_KEY);
+    if (!raw) return null;
+    localStorage.removeItem(FORGE_HANDOFF_KEY);
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem(FORGE_HANDOFF_KEY);
+    return null;
+  }
+}
+
+function readForgeHandoffFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get("forge");
+  if (!encoded) return null;
+
+  clearForgeQueryParams();
+
+  try {
+    return JSON.parse(decodeHandoffPayload(encoded));
+  } catch {
+    return null;
+  }
+}
+
+function clearForgeQueryParams() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("from");
+    url.searchParams.delete("forge");
+    window.history.replaceState(null, "", url.href);
+  } catch {
+    // Query cleanup is optional; the handoff still works without it.
+  }
+}
+
+function decodeHandoffPayload(encoded) {
+  const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function isValidForgeHandoff(payload) {
+  return (
+    payload &&
+    payload.source === "midjourney-prompt-forge" &&
+    Array.isArray(payload.items)
+  );
+}
+
+function createStateFromForgeHandoff(payload) {
+  const items = [];
+  const goal = normalizeOptionalBlock(payload.goal);
+  const aspectRatio = normalizeOptionalInline(payload.aspectRatio);
+  const negativePrompt = normalizeOptionalBlock(payload.negativePrompt);
+
+  if (goal) {
+    items.push(createItem("目的", goal, ""));
+  }
+
+  payload.items.forEach((item) => {
+    const name = normalizeOptionalInline(item.name) || "項目";
+    const content = normalizeOptionalBlock(item.content);
+    items.push(createItem(name, content, ""));
+  });
+
+  if (aspectRatio) {
+    items.push(createItem("アスペクト比", aspectRatio, ""));
+  }
+
+  if (negativePrompt) {
+    items.push(createItem("ネガティブプロンプト", negativePrompt, ""));
+  }
+
+  if (!items.length) {
+    items.push(createItem("画像生成プロンプト", "", "自由に入力"));
+  }
+
+  return {
+    type: "image",
+    title: normalizeOptionalInline(payload.title) || "画像生成プロンプト",
+    outputTone: "generic",
+    items
+  };
 }
 
 function isValidSavedState(saved) {
@@ -921,7 +1081,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260616-pw2").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-pw3").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }

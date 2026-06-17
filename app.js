@@ -1,4 +1,5 @@
 const STORAGE_KEY = "midjourney-prompt-forge-state-v10-subject-label";
+const PROMPTWEAVER_HANDOFF_KEY = "midjourney-prompt-forge-to-promptweaver-v1";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
 
@@ -148,6 +149,7 @@ const elements = {
   addPiece: document.querySelector("#addPiece"),
   copyPrompt: document.querySelector("#copyPrompt"),
   downloadMarkdown: document.querySelector("#downloadMarkdown"),
+  openPromptWeaver: document.querySelector("#openPromptWeaver"),
   resetPreset: document.querySelector("#resetPreset"),
   selectOutput: document.querySelector("#selectOutput")
 };
@@ -232,6 +234,7 @@ function bindEvents() {
 
   elements.copyPrompt.addEventListener("click", copyPrompt);
   elements.downloadMarkdown.addEventListener("click", downloadMarkdown);
+  elements.openPromptWeaver.addEventListener("click", openPromptWeaver);
   elements.resetPreset.addEventListener("click", resetPreset);
   elements.refreshQr.addEventListener("click", renderQr);
   elements.shareUrl.addEventListener("input", renderQr);
@@ -613,6 +616,70 @@ function downloadMarkdown() {
   anchor.click();
   URL.revokeObjectURL(url);
   setStatus("Markdownを保存しました");
+}
+
+function openPromptWeaver(event) {
+  const payload = buildPromptWeaverHandoffPayload();
+  const encodedPayload = encodeHandoffPayload(payload);
+  const stored = storePromptWeaverHandoff(payload);
+
+  if (!stored && encodedPayload.length > 6000) {
+    event.preventDefault();
+    setStatus("PromptWeaver連携データを保存できませんでした");
+    return;
+  }
+
+  elements.openPromptWeaver.href = buildPromptWeaverUrl(encodedPayload);
+  setStatus("PromptWeaverへ反映します");
+}
+
+function buildPromptWeaverHandoffPayload() {
+  const preset = promptPresets[state.preset] || promptPresets[DEFAULT_PRESET];
+  const items = state.pieces
+    .filter((piece) => piece.enabled)
+    .map((piece) => ({
+      name: normalizeInline(piece.name),
+      content: normalizePromptClause(piece.content)
+    }))
+    .filter((item) => item.name || item.content);
+
+  return {
+    source: "midjourney-prompt-forge",
+    version: 1,
+    title: normalizeInline(state.title) || `${preset.label}プロンプト`,
+    preset: preset.label,
+    goal: normalizeInline(state.goal),
+    aspectRatio: resolveAspectRatio(),
+    negativePrompt: normalizeNoList(state.negativePrompt),
+    items
+  };
+}
+
+function storePromptWeaverHandoff(payload) {
+  try {
+    localStorage.setItem(PROMPTWEAVER_HANDOFF_KEY, JSON.stringify(payload));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function buildPromptWeaverUrl(encodedPayload) {
+  const url = new URL(elements.openPromptWeaver.getAttribute("href") || "promptweaver/", window.location.href);
+  url.searchParams.set("from", "forge");
+  if (encodedPayload.length <= 6000) {
+    url.searchParams.set("forge", encodedPayload);
+  }
+  return url.href;
+}
+
+function encodeHandoffPayload(payload) {
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 function setStatus(message) {
@@ -1303,7 +1370,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-9").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-10").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
