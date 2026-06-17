@@ -646,7 +646,7 @@ function buildPromptText() {
   const imageRefs = splitRefs(state.imageRefs).join(" ");
   const positive = state.pieces
     .filter((piece) => piece.enabled)
-    .map((piece) => normalizePromptClause(piece.content))
+    .map((piece) => buildPromptPieceClause(piece))
     .filter(Boolean)
     .join(", ");
 
@@ -655,6 +655,14 @@ function buildPromptText() {
   const parameters = buildParameterTokens().join(" ");
 
   return [imageRefs, positive, parameters].filter(Boolean).join(" ").trim();
+}
+
+function buildPromptPieceClause(piece) {
+  const content = normalizePromptClause(piece.content);
+  if (!content) return "";
+
+  const label = normalizeInline(piece.name);
+  return label ? `${label}: ${content}` : content;
 }
 
 function buildBriefOutput() {
@@ -1295,7 +1303,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-8").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-9").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
