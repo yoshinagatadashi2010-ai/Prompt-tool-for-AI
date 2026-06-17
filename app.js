@@ -1,4 +1,5 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v4-nine-field-defaults";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v5-portrait-default";
+const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
 
 let serverConfig = globalThis.PROMPTWEAVER_SERVER || {};
@@ -893,7 +894,7 @@ function loadState() {
     localStorage.removeItem(STORAGE_KEY);
   }
 
-  return createPresetState("product");
+  return createPresetState(DEFAULT_PRESET);
 }
 
 function isValidSavedState(saved) {
@@ -1298,7 +1299,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-2").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-3").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
