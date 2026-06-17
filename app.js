@@ -37,7 +37,7 @@ const promptPresets = {
       ["主題", "single matte black skincare bottle with embossed silver label"],
       ["環境", "warm stone bathroom counter, soft linen towel, minimal premium props"],
       ["構図", "three-quarter front view, product centered, clean negative space"],
-      ["光", "soft window light from the left, gentle highlight on the bottle edge"],
+      ["ライティング", "soft window light from the left, gentle highlight on the bottle edge"],
       ["質感", "realistic glass, brushed metal cap, fine surface detail, premium finish"],
       ["スタイル", "high-end commercial product photography, natural color grading"]
     ]
@@ -54,7 +54,7 @@ const promptPresets = {
       ["表情", "calm expression, direct but relaxed eye contact"],
       ["環境", "modern daylight studio with subtle architectural shadows"],
       ["構図", "waist-up portrait, 85mm lens look, shallow depth of field"],
-      ["光", "large softbox key light, delicate rim light, natural skin texture"],
+      ["ライティング", "large softbox key light, delicate rim light, natural skin texture"],
       ["スタイル", "editorial photography, refined color, realistic detail"]
     ]
   },
@@ -70,7 +70,7 @@ const promptPresets = {
       ["時間", "blue hour after sunset, warm light glowing through tall windows"],
       ["環境", "misty sea below, narrow stone terraces, sparse pine trees"],
       ["構図", "wide establishing shot, layered depth, leading lines toward the entrance"],
-      ["光", "cinematic contrast, warm interior light against cool ambient sky"],
+      ["ライティング", "cinematic contrast, warm interior light against cool ambient sky"],
       ["スタイル", "high-detail environment concept art, atmospheric realism"]
     ]
   },
@@ -759,7 +759,7 @@ function updateScore() {
   const filledPieces = enabledPieces.filter((piece) => normalizeBlock(piece.content) !== EMPTY_VALUE);
   const hasSubject = filledPieces.some((piece) => /主題|商品|人物|キャラ|subject/i.test(piece.name));
   const hasComposition = filledPieces.some((piece) => /構図|camera|lens|composition|ポーズ/i.test(piece.name));
-  const hasLight = filledPieces.some((piece) => /光|lighting|light/i.test(piece.name));
+  const hasLight = filledPieces.some((piece) => /光|ライティング|lighting|light/i.test(piece.name));
   const hasStyle = filledPieces.some((piece) => /スタイル|style|質感|design/i.test(piece.name));
   const hasNegative = Boolean(normalizeNoList(state.negativePrompt));
 
@@ -777,9 +777,9 @@ function updateScore() {
   if (score >= 85) {
     elements.scoreText.textContent = "本番投入しやすい密度です";
   } else if (score >= 65) {
-    elements.scoreText.textContent = "主題・構図・光はおおむね揃っています";
+    elements.scoreText.textContent = "主題・構図・ライティングはおおむね揃っています";
   } else {
-    elements.scoreText.textContent = "主題、構図、光、スタイルを埋めると安定します";
+    elements.scoreText.textContent = "主題、構図、ライティング、スタイルを埋めると安定します";
   }
 }
 
@@ -900,10 +900,16 @@ function normalizeSavedParams(params, preset) {
   };
 }
 
+function normalizePieceName(name) {
+  const value = String(name || "").trim();
+  if (value === "光") return "ライティング";
+  return value || "項目";
+}
+
 function normalizeSavedPiece(piece) {
   return {
     id: piece.id || createId(),
-    name: piece.name || "項目",
+    name: normalizePieceName(piece.name),
     content: piece.content || "",
     placeholder: piece.placeholder || "",
     enabled: piece.enabled !== false
@@ -1279,7 +1285,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260616-7").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260616-8").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
