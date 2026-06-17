@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v7-expression-clothing-posing";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v8-product-32";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
 
@@ -33,12 +33,9 @@ const promptPresets = {
     goal: "EC・広告・SNSの商品ビジュアル",
     outputFormat: "prompt",
     negativePrompt: sharedNegative,
-    params: { ...defaultParams, aspectRatio: "4:5", stylize: 120, chaos: 5 },
+    params: { ...defaultParams, aspectRatio: "3:2", stylize: 120, chaos: 5 },
     pieces: [
       ["主題", "single matte black skincare bottle with embossed silver label"],
-      ["髪型", ""],
-      ["表情", ""],
-      ["服装", ""],
       ["背景・シーン", "warm stone bathroom counter, soft linen towel, minimal premium props"],
       ["構図", "three-quarter front view, product centered, clean negative space"],
       ["ライティング", "soft window light from the left, gentle highlight on the bottle edge"],
@@ -1300,7 +1297,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-5").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-6").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
