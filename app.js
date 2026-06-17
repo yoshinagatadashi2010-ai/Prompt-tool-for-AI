@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v9-scene-six-fields";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v10-subject-label";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
 
@@ -35,7 +35,7 @@ const promptPresets = {
     negativePrompt: sharedNegative,
     params: { ...defaultParams, aspectRatio: "3:2", stylize: 120, chaos: 5 },
     pieces: [
-      ["主題", "single matte black skincare bottle with embossed silver label"],
+      ["被写体", "single matte black skincare bottle with embossed silver label"],
       ["背景・シーン", "warm stone bathroom counter, soft linen towel, minimal premium props"],
       ["構図", "three-quarter front view, product centered, clean negative space"],
       ["ライティング", "soft window light from the left, gentle highlight on the bottle edge"],
@@ -51,7 +51,7 @@ const promptPresets = {
     negativePrompt: sharedNegative,
     params: { ...defaultParams, aspectRatio: "2:3", stylize: 100, chaos: 4, rawMode: true },
     pieces: [
-      ["主題", "confident creative director in a tailored navy jacket"],
+      ["被写体", "confident creative director in a tailored navy jacket"],
       ["髪型", ""],
       ["表情", ""],
       ["服装", ""],
@@ -70,7 +70,7 @@ const promptPresets = {
     negativePrompt: "text, watermark, logo, blurry, low quality, flat lighting, clutter",
     params: { ...defaultParams, aspectRatio: "16:9", stylize: 220, chaos: 12 },
     pieces: [
-      ["主題", "quiet coastal library built into white limestone cliffs"],
+      ["被写体", "quiet coastal library built into white limestone cliffs"],
       ["時間", "blue hour after sunset, warm light glowing through tall windows"],
       ["背景・シーン", "misty sea below, narrow stone terraces, sparse pine trees"],
       ["構図", "wide establishing shot, layered depth, leading lines toward the entrance"],
@@ -93,7 +93,7 @@ const promptPresets = {
       rawMode: false
     },
     pieces: [
-      ["主題", "young skyship mechanic with brass goggles and a cobalt work coat"],
+      ["被写体", "young skyship mechanic with brass goggles and a cobalt work coat"],
       ["髪型", ""],
       ["表情", ""],
       ["服装", ""],
@@ -764,7 +764,7 @@ function updateCompatibilityStatus() {
 function updateScore() {
   const enabledPieces = state.pieces.filter((piece) => piece.enabled);
   const filledPieces = enabledPieces.filter((piece) => normalizeBlock(piece.content) !== EMPTY_VALUE);
-  const hasSubject = filledPieces.some((piece) => /主題|商品|人物|キャラ|subject/i.test(piece.name));
+  const hasSubject = filledPieces.some((piece) => /主題|被写体|商品|人物|キャラ|subject/i.test(piece.name));
   const hasComposition = filledPieces.some((piece) => /構図|camera|lens|composition|ポーズ/i.test(piece.name));
   const hasLight = filledPieces.some((piece) => /光|ライティング|lighting|light/i.test(piece.name));
   const hasStyle = filledPieces.some((piece) => /スタイル|style|質感|design/i.test(piece.name));
@@ -784,9 +784,9 @@ function updateScore() {
   if (score >= 85) {
     elements.scoreText.textContent = "本番投入しやすい密度です";
   } else if (score >= 65) {
-    elements.scoreText.textContent = "主題・構図・ライティングはおおむね揃っています";
+    elements.scoreText.textContent = "被写体・構図・ライティングはおおむね揃っています";
   } else {
-    elements.scoreText.textContent = "主題、構図、ライティング、スタイルを埋めると安定します";
+    elements.scoreText.textContent = "被写体、構図、ライティング、スタイルを埋めると安定します";
   }
 }
 
@@ -909,6 +909,7 @@ function normalizeSavedParams(params, preset) {
 
 function normalizePieceName(name) {
   const value = String(name || "").trim();
+  if (value === "主題") return "被写体";
   if (value === "光") return "ライティング";
   if (value === "環境") return "背景・シーン";
   if (value === "表情・ポージング") return "服装";
@@ -1294,7 +1295,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-7").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-8").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
