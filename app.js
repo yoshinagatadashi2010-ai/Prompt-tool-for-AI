@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v5-portrait-default";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v7-expression-clothing-posing";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
 
@@ -37,8 +37,8 @@ const promptPresets = {
     pieces: [
       ["主題", "single matte black skincare bottle with embossed silver label"],
       ["髪型", ""],
+      ["表情", ""],
       ["服装", ""],
-      ["表情・ポージング", ""],
       ["背景・シーン", "warm stone bathroom counter, soft linen towel, minimal premium props"],
       ["構図", "three-quarter front view, product centered, clean negative space"],
       ["ライティング", "soft window light from the left, gentle highlight on the bottle edge"],
@@ -56,9 +56,9 @@ const promptPresets = {
     pieces: [
       ["主題", "confident creative director in a tailored navy jacket"],
       ["髪型", ""],
+      ["表情", ""],
       ["服装", ""],
-      ["表情・ポージング", ""],
-      ["表情", "calm expression, direct but relaxed eye contact"],
+      ["ポージング", "calm expression, direct but relaxed eye contact"],
       ["背景・シーン", "modern daylight studio with subtle architectural shadows"],
       ["構図", "waist-up portrait, 85mm lens look, shallow depth of field"],
       ["ライティング", "large softbox key light, delicate rim light, natural skin texture"],
@@ -75,8 +75,8 @@ const promptPresets = {
     pieces: [
       ["主題", "quiet coastal library built into white limestone cliffs"],
       ["髪型", ""],
+      ["表情", ""],
       ["服装", ""],
-      ["表情・ポージング", ""],
       ["時間", "blue hour after sunset, warm light glowing through tall windows"],
       ["背景・シーン", "misty sea below, narrow stone terraces, sparse pine trees"],
       ["構図", "wide establishing shot, layered depth, leading lines toward the entrance"],
@@ -101,8 +101,8 @@ const promptPresets = {
     pieces: [
       ["主題", "young skyship mechanic with brass goggles and a cobalt work coat"],
       ["髪型", ""],
+      ["表情", ""],
       ["服装", ""],
-      ["表情・ポージング", ""],
       ["デザイン", "expressive eyes, short tousled hair, tool belt with tiny charms"],
       ["ポーズ", "standing on a floating dock, holding a glowing engine core"],
       ["世界観", "sunny cloud harbor, small airships, hand-painted fantasy machinery"],
@@ -917,6 +917,7 @@ function normalizePieceName(name) {
   const value = String(name || "").trim();
   if (value === "光") return "ライティング";
   if (value === "環境") return "背景・シーン";
+  if (value === "表情・ポージング") return "服装";
   return value || "項目";
 }
 
@@ -1299,7 +1300,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-3").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-5").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
