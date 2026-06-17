@@ -35,7 +35,7 @@ const promptPresets = {
     params: { ...defaultParams, aspectRatio: "4:5", stylize: 120, chaos: 5 },
     pieces: [
       ["主題", "single matte black skincare bottle with embossed silver label"],
-      ["環境", "warm stone bathroom counter, soft linen towel, minimal premium props"],
+      ["背景・シーン", "warm stone bathroom counter, soft linen towel, minimal premium props"],
       ["構図", "three-quarter front view, product centered, clean negative space"],
       ["ライティング", "soft window light from the left, gentle highlight on the bottle edge"],
       ["質感", "realistic glass, brushed metal cap, fine surface detail, premium finish"],
@@ -52,7 +52,7 @@ const promptPresets = {
     pieces: [
       ["主題", "confident creative director in a tailored navy jacket"],
       ["表情", "calm expression, direct but relaxed eye contact"],
-      ["環境", "modern daylight studio with subtle architectural shadows"],
+      ["背景・シーン", "modern daylight studio with subtle architectural shadows"],
       ["構図", "waist-up portrait, 85mm lens look, shallow depth of field"],
       ["ライティング", "large softbox key light, delicate rim light, natural skin texture"],
       ["スタイル", "editorial photography, refined color, realistic detail"]
@@ -68,7 +68,7 @@ const promptPresets = {
     pieces: [
       ["主題", "quiet coastal library built into white limestone cliffs"],
       ["時間", "blue hour after sunset, warm light glowing through tall windows"],
-      ["環境", "misty sea below, narrow stone terraces, sparse pine trees"],
+      ["背景・シーン", "misty sea below, narrow stone terraces, sparse pine trees"],
       ["構図", "wide establishing shot, layered depth, leading lines toward the entrance"],
       ["ライティング", "cinematic contrast, warm interior light against cool ambient sky"],
       ["スタイル", "high-detail environment concept art, atmospheric realism"]
@@ -903,6 +903,7 @@ function normalizeSavedParams(params, preset) {
 function normalizePieceName(name) {
   const value = String(name || "").trim();
   if (value === "光") return "ライティング";
+  if (value === "環境") return "背景・シーン";
   return value || "項目";
 }
 
@@ -1285,7 +1286,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260616-8").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260616-9").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
