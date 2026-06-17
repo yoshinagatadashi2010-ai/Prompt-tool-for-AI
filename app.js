@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v8-product-32";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v9-scene-six-fields";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
 
@@ -71,9 +71,6 @@ const promptPresets = {
     params: { ...defaultParams, aspectRatio: "16:9", stylize: 220, chaos: 12 },
     pieces: [
       ["主題", "quiet coastal library built into white limestone cliffs"],
-      ["髪型", ""],
-      ["表情", ""],
-      ["服装", ""],
       ["時間", "blue hour after sunset, warm light glowing through tall windows"],
       ["背景・シーン", "misty sea below, narrow stone terraces, sparse pine trees"],
       ["構図", "wide establishing shot, layered depth, leading lines toward the entrance"],
@@ -1297,7 +1294,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-6").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260617-7").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
