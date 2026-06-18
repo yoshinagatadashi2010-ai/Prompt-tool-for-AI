@@ -107,7 +107,9 @@ const promptPresets = {
   }
 };
 
-let state = loadState();
+let pendingNamedProject = globalThis.PromptProjectLibrary?.consumePendingProject("forge") || null;
+let state = loadInitialState();
+let projectLibrary = null;
 
 const elements = {
   pieceList: document.querySelector("#pieceList"),
@@ -149,6 +151,7 @@ const elements = {
   addPiece: document.querySelector("#addPiece"),
   copyPrompt: document.querySelector("#copyPrompt"),
   downloadMarkdown: document.querySelector("#downloadMarkdown"),
+  openProjectLibrary: document.querySelector("#openProjectLibrary"),
   openPromptWeaver: document.querySelector("#openPromptWeaver"),
   resetPreset: document.querySelector("#resetPreset"),
   selectOutput: document.querySelector("#selectOutput")
@@ -176,8 +179,31 @@ function initialize() {
   elements.shareUrl.value = getInitialShareUrl();
   bindEvents();
   renderPieces();
+  initializeProjectLibrary();
   renderQr();
   registerServiceWorker();
+  if (pendingNamedProject) setStatus(`「${pendingNamedProject.name}」を開きました`);
+}
+
+function initializeProjectLibrary() {
+  projectLibrary = globalThis.PromptProjectLibrary.createManager({
+    appType: "forge",
+    button: elements.openProjectLibrary,
+    initialProject: pendingNamedProject,
+    getState: () => state,
+    applyState: (savedState) => {
+      state = normalizeForgeState(savedState);
+      syncControlsFromState();
+      renderPieces();
+    },
+    getDefaultName: () =>
+      normalizeInline(state.title) || `${promptPresets[state.preset].label}プロジェクト`,
+    setStatus,
+    appUrls: {
+      forge: "./",
+      promptweaver: "promptweaver/"
+    }
+  });
 }
 
 function bindEvents() {
@@ -942,28 +968,50 @@ function finishText(lines) {
   return `${lines.join("\n").trim()}\n`;
 }
 
+function loadInitialState() {
+  if (pendingNamedProject) {
+    try {
+      return normalizeForgeState(pendingNamedProject.state);
+    } catch {
+      pendingNamedProject = null;
+    }
+  }
+
+  return loadState();
+}
+
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (isValidSavedState(saved)) {
-      return {
-        preset: saved.preset,
-        title: typeof saved.title === "string" ? saved.title : promptPresets[saved.preset].title,
-        goal: typeof saved.goal === "string" ? saved.goal : promptPresets[saved.preset].goal,
-        outputFormat: saved.outputFormat || "prompt",
-        imageRefs: saved.imageRefs || "",
-        styleRefs: saved.styleRefs || "",
-        negativePrompt:
-          typeof saved.negativePrompt === "string" ? saved.negativePrompt : promptPresets[saved.preset].negativePrompt,
-        params: normalizeSavedParams(saved.params, saved.preset),
-        pieces: saved.pieces.map(normalizeSavedPiece)
-      };
+      return normalizeForgeState(saved);
     }
   } catch {
     localStorage.removeItem(STORAGE_KEY);
   }
 
   return createPresetState(DEFAULT_PRESET);
+}
+
+function normalizeForgeState(saved) {
+  if (!isValidSavedState(saved)) {
+    throw new Error("Forgeの保存データが正しくありません。");
+  }
+
+  return {
+    preset: saved.preset,
+    title: typeof saved.title === "string" ? saved.title : promptPresets[saved.preset].title,
+    goal: typeof saved.goal === "string" ? saved.goal : promptPresets[saved.preset].goal,
+    outputFormat: saved.outputFormat || "prompt",
+    imageRefs: saved.imageRefs || "",
+    styleRefs: saved.styleRefs || "",
+    negativePrompt:
+      typeof saved.negativePrompt === "string"
+        ? saved.negativePrompt
+        : promptPresets[saved.preset].negativePrompt,
+    params: normalizeSavedParams(saved.params, saved.preset),
+    pieces: saved.pieces.map(normalizeSavedPiece)
+  };
 }
 
 function isValidSavedState(saved) {
@@ -1370,7 +1418,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-10").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260618-1").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }

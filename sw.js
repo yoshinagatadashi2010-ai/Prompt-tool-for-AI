@@ -1,9 +1,11 @@
-const CACHE_NAME = "midjourney-prompt-forge-v1-20260617-10";
+const CACHE_NAME = "midjourney-prompt-forge-v1-20260618-1";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260617-10",
-  "./app.js?v=20260617-10",
+  "./styles.css?v=20260618-1",
+  "./project-library.css?v=20260618-1",
+  "./project-library.js?v=20260618-1",
+  "./app.js?v=20260618-1",
   "./manifest.webmanifest",
   "./icon.svg",
   "./icon-192.png",

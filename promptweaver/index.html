@@ -10,7 +10,8 @@
     <title>PromptWeaver</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <link rel="stylesheet" href="styles.css?v=20260617-pw3" />
+    <link rel="stylesheet" href="styles.css?v=20260618-pw1" />
+    <link rel="stylesheet" href="../project-library.css?v=20260618-1" />
   </head>
   <body>
     <div class="app-shell">
@@ -29,6 +30,7 @@
             <button class="segment" type="button" data-type="video" role="radio" aria-checked="false">動画</button>
           </div>
           <a class="icon-button" href="../" aria-label="Midjourney Prompt Forgeを開く" title="Midjourney Prompt Forgeを開く">MJ</a>
+          <button class="icon-button text-action" type="button" id="openProjectLibrary" aria-label="名前付き保存を開く" title="名前付き保存を開く">Save</button>
           <button class="icon-button" type="button" id="copyMarkdown" aria-label="プロンプト本文をコピー" title="プロンプト本文をコピー">⧉</button>
           <button class="icon-button" type="button" id="downloadMarkdown" aria-label="Markdownを保存" title="Markdownを保存">⇩</button>
           <button class="icon-button danger" type="button" id="resetTemplate" aria-label="テンプレートを初期化" title="テンプレートを初期化">↺</button>
@@ -129,6 +131,7 @@
       </article>
     </template>
 
-    <script src="app.js?v=20260617-pw3" defer></script>
+    <script src="../project-library.js?v=20260618-1" defer></script>
+    <script src="app.js?v=20260618-pw1" defer></script>
   </body>
 </html>

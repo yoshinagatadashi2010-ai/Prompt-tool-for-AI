@@ -39,7 +39,9 @@ const promptTemplates = {
   }
 };
 
-let state = loadState();
+let pendingNamedProject = globalThis.PromptProjectLibrary?.consumePendingProject("promptweaver") || null;
+let state = loadInitialState();
+let projectLibrary = null;
 let draggedId = null;
 let pointerDrag = null;
 
@@ -59,6 +61,7 @@ const elements = {
   addItem: document.querySelector("#addItem"),
   copyMarkdown: document.querySelector("#copyMarkdown"),
   downloadMarkdown: document.querySelector("#downloadMarkdown"),
+  openProjectLibrary: document.querySelector("#openProjectLibrary"),
   resetTemplate: document.querySelector("#resetTemplate"),
   selectMarkdown: document.querySelector("#selectMarkdown")
 };
@@ -86,8 +89,31 @@ function initialize() {
   elements.shareUrl.value = getInitialShareUrl();
   bindEvents();
   render();
+  initializeProjectLibrary();
   renderQr();
   registerServiceWorker();
+  if (pendingNamedProject) setStatus(`「${pendingNamedProject.name}」を開きました`);
+}
+
+function initializeProjectLibrary() {
+  projectLibrary = globalThis.PromptProjectLibrary.createManager({
+    appType: "promptweaver",
+    button: elements.openProjectLibrary,
+    initialProject: pendingNamedProject,
+    getState: () => state,
+    applyState: (savedState) => {
+      state = normalizePromptWeaverState(savedState);
+      elements.promptTitle.value = state.title;
+      elements.outputTone.value = state.outputTone;
+      render();
+    },
+    getDefaultName: () => normalizeOptionalInline(state.title) || "PromptWeaverプロジェクト",
+    setStatus,
+    appUrls: {
+      forge: "../",
+      promptweaver: "./"
+    }
+  });
 }
 
 function bindEvents() {
@@ -580,6 +606,18 @@ function normalizeOptionalInline(value) {
   return normalizeOptionalBlock(value).replace(/\s+/g, " ");
 }
 
+function loadInitialState() {
+  if (pendingNamedProject) {
+    try {
+      return normalizePromptWeaverState(pendingNamedProject.state);
+    } catch {
+      pendingNamedProject = null;
+    }
+  }
+
+  return loadState();
+}
+
 function loadState() {
   const handoffState = consumeForgeHandoff();
   if (handoffState) return handoffState;
@@ -587,18 +625,26 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (isValidSavedState(saved)) {
-      return {
-        type: saved.type,
-        title: saved.title || promptTemplates[saved.type].title,
-        outputTone: saved.outputTone || promptTemplates[saved.type].outputTone,
-        items: saved.items.map(normalizeSavedItem)
-      };
+      return normalizePromptWeaverState(saved);
     }
   } catch {
     localStorage.removeItem(STORAGE_KEY);
   }
 
   return createTemplateState("image");
+}
+
+function normalizePromptWeaverState(saved) {
+  if (!isValidSavedState(saved)) {
+    throw new Error("PromptWeaverの保存データが正しくありません。");
+  }
+
+  return {
+    type: saved.type,
+    title: saved.title || promptTemplates[saved.type].title,
+    outputTone: saved.outputTone || promptTemplates[saved.type].outputTone,
+    items: saved.items.map(normalizeSavedItem)
+  };
 }
 
 function consumeForgeHandoff() {
@@ -1081,7 +1127,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260617-pw3").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260618-pw1").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }

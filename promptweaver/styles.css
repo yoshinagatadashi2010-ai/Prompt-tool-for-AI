@@ -308,6 +308,13 @@ select {
   outline: none;
 }
 
+.icon-button.text-action {
+  width: auto;
+  min-width: 48px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+}
+
 input,
 select {
   min-height: 44px;
