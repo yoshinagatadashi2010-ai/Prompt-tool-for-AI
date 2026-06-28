@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v11-photo-type";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v12-subject";
 const PROMPTWEAVER_HANDOFF_KEY = "midjourney-prompt-forge-to-promptweaver-v1";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
@@ -52,7 +52,7 @@ const promptPresets = {
     negativePrompt: sharedNegative,
     params: { ...defaultParams, aspectRatio: "2:3", stylize: 100, chaos: 4, rawMode: true },
     pieces: [
-      ["写真の種類/世界観", ""],
+      ["主題", ""],
       ["被写体", "confident creative director in a tailored navy jacket"],
       ["髪型", ""],
       ["表情", ""],
@@ -1033,7 +1033,6 @@ function normalizeSavedParams(params, preset) {
 
 function normalizePieceName(name) {
   const value = String(name || "").trim();
-  if (value === "主題") return "被写体";
   if (value === "光") return "ライティング";
   if (value === "環境") return "背景・シーン";
   if (value === "表情・ポージング") return "服装";
@@ -1419,7 +1418,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260621-1").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260628-1").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
