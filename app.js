@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v13-portrait-no-subject";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v14-portrait-compact";
 const PROMPTWEAVER_HANDOFF_KEY = "midjourney-prompt-forge-to-promptweaver-v1";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
@@ -53,9 +53,6 @@ const promptPresets = {
     params: { ...defaultParams, aspectRatio: "2:3", stylize: 100, chaos: 4, rawMode: true },
     pieces: [
       ["主題", ""],
-      ["髪型", ""],
-      ["表情", ""],
-      ["服装", ""],
       ["ポージング", "calm expression, direct but relaxed eye contact"],
       ["背景・シーン", "modern daylight studio with subtle architectural shadows"],
       ["構図", "waist-up portrait, 85mm lens look, shallow depth of field"],
@@ -1417,7 +1414,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260628-2").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260628-3").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
