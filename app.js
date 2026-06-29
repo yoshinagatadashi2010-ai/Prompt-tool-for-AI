@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v14-portrait-compact";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v15-product-tuning";
 const PROMPTWEAVER_HANDOFF_KEY = "midjourney-prompt-forge-to-promptweaver-v1";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
@@ -34,7 +34,7 @@ const promptPresets = {
     goal: "EC・広告・SNSの商品ビジュアル",
     outputFormat: "prompt",
     negativePrompt: sharedNegative,
-    params: { ...defaultParams, aspectRatio: "3:2", stylize: 120, chaos: 5 },
+    params: { ...defaultParams, aspectRatio: "3:2", stylize: 150, chaos: 15 },
     pieces: [
       ["被写体", "single matte black skincare bottle with embossed silver label"],
       ["背景・シーン", "warm stone bathroom counter, soft linen towel, minimal premium props"],
@@ -1414,7 +1414,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260628-3").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260629-1").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
