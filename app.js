@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v15-product-tuning";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v16-portrait-stylize";
 const PROMPTWEAVER_HANDOFF_KEY = "midjourney-prompt-forge-to-promptweaver-v1";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
@@ -50,7 +50,7 @@ const promptPresets = {
     goal: "プロフィール・広告・ビジュアル企画",
     outputFormat: "prompt",
     negativePrompt: sharedNegative,
-    params: { ...defaultParams, aspectRatio: "2:3", stylize: 100, chaos: 4, rawMode: true },
+    params: { ...defaultParams, aspectRatio: "2:3", stylize: 150, chaos: 4, rawMode: true },
     pieces: [
       ["主題", ""],
       ["ポージング", "calm expression, direct but relaxed eye contact"],
@@ -1414,7 +1414,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260629-1").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260629-2").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
