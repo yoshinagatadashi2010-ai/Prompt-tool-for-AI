@@ -1,4 +1,4 @@
-const STORAGE_KEY = "midjourney-prompt-forge-state-v16-portrait-stylize";
+const STORAGE_KEY = "midjourney-prompt-forge-state-v17-balanced-tuning";
 const PROMPTWEAVER_HANDOFF_KEY = "midjourney-prompt-forge-to-promptweaver-v1";
 const DEFAULT_PRESET = "portrait";
 const EMPTY_VALUE = "未入力";
@@ -50,7 +50,7 @@ const promptPresets = {
     goal: "プロフィール・広告・ビジュアル企画",
     outputFormat: "prompt",
     negativePrompt: sharedNegative,
-    params: { ...defaultParams, aspectRatio: "2:3", stylize: 150, chaos: 4, rawMode: true },
+    params: { ...defaultParams, aspectRatio: "2:3", stylize: 150, chaos: 15, rawMode: true },
     pieces: [
       ["主題", ""],
       ["ポージング", "calm expression, direct but relaxed eye contact"],
@@ -66,7 +66,7 @@ const promptPresets = {
     goal: "背景美術・コンセプトアート・世界観設計",
     outputFormat: "prompt",
     negativePrompt: "text, watermark, logo, blurry, low quality, flat lighting, clutter",
-    params: { ...defaultParams, aspectRatio: "16:9", stylize: 220, chaos: 12 },
+    params: { ...defaultParams, aspectRatio: "16:9", stylize: 150, chaos: 15 },
     pieces: [
       ["被写体", "quiet coastal library built into white limestone cliffs"],
       ["時間", "blue hour after sunset, warm light glowing through tall windows"],
@@ -1414,7 +1414,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260629-2").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260629-3").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
