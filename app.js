@@ -795,8 +795,8 @@ function buildMarkdownPackage() {
     "## Prompt Pieces"
   ];
 
-  activePieces.forEach((piece, index) => {
-    lines.push("", `### P${index + 1}: ${normalizeInline(piece.name) || "項目"}`, normalizeBlock(piece.content));
+  activePieces.forEach((piece) => {
+    lines.push("", `### ${normalizeInline(piece.name) || "項目"}`, normalizeBlock(piece.content));
   });
 
   return finishText(lines);
@@ -1414,7 +1414,7 @@ function isInside(modules, x, y) {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || window.location.protocol === "file:") return;
 
-  navigator.serviceWorker.register("./sw.js?v=20260629-3").catch(() => {
+  navigator.serviceWorker.register("./sw.js?v=20260701-1").catch(() => {
     // The app still works as a plain local file when service workers are unavailable.
   });
 }
